@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <!-- พื้นหลังสี Dark Pastel ไฮเอนด์ -->
+    <linearGradient id="bgDarkNeo" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1E1B4B"/>
+      <stop offset="50%" stop-color="#312E81"/>
+      <stop offset="100%" stop-color="#0F172A"/>
+    </linearGradient>
+    <!-- วงแหวนสะท้อนแสง Gradient -->
+    <linearGradient id="glowRing" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8"/>
+      <stop offset="50%" stop-color="#818CF8"/>
+      <stop offset="100%" stop-color="#F43F5E"/>
+    </linearGradient>
+    <filter id="neonFilter" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="16" stdDeviation="24" flood-color="#818CF8" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <rect width="512" height="512" rx="120" fill="url(#bgDarkNeo)"/>
+  <rect x="6" y="6" width="500" height="500" rx="114" fill="none" stroke="#FFFFFF" stroke-width="2" opacity="0.15"/>
+
+  <g filter="url(#neonFilter)">
+    <!-- วงแหวนรีเซ็ตรอบคู่ (Dual Infinite Loop) -->
+    <path d="M 256 96 C 344 96 416 168 416 256 C 416 304 394 348 360 378" fill="none" stroke="url(#glowRing)" stroke-width="28" stroke-linecap="round"/>
+    <path d="M 256 416 C 168 416 96 344 96 256 C 96 208 118 164 152 134" fill="none" stroke="#38BDF8" stroke-width="28" stroke-linecap="round"/>
+
+    <!-- หัวลูกศรหมุนวนรอบ -->
+    <polygon points="380,390 350,380 370,350" fill="#F43F5E"/>
+    <polygon points="132,122 162,132 142,162" fill="#38BDF8"/>
+
+    <!-- การ์ด Glass มืดลอยตรงกลาง -->
+    <circle cx="256" cy="256" r="88" fill="#1E293B" stroke="#475569" stroke-width="4"/>
+    
+    <!-- สัญลักษณ์กระป๋อง / หยดน้ำมันเครื่องสีทอง 3D -->
+    <path d="M 256 200 C 256 200 226 240 226 262 C 226 280 240 295 256 295 C 272 295 286 280 286 262 C 286 240 256 200 256 200 Z" fill="#F59E0B"/>
+    <circle cx="250" cy="262" r="4" fill="#FEF3C7"/>
+    <rect x="236" y="306" width="40" height="12" rx="6" fill="#38BDF8"/>
+  </g>
+</svg>
