@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="th" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>RiderLog • ตัวบันทึกระยะทาง</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Kanit', 'sans-serif'],
+            display: ['Plus Jakarta Sans', 'Kanit', 'sans-serif'],
+          },
+          colors: {
+            korean: {
+              cream: '#FAF8F5',
+              lavender: '#EDE8F5',
+              lavenderDark: '#8A7BB3',
+              mint: '#E2F3EE',
+              mintDark: '#359379',
+              peach: '#FFE7E0',
+              peachDark: '#E47456',
+              lilac: '#9F8BF8',
+              cardBg: 'rgba(255, 255, 255, 0.88)',
+              ink: '#232936',
+              sub: '#747C8C'
+            }
+          },
+          boxShadow: {
+            'soft': '0 10px 25px -5px rgba(159, 139, 248, 0.12), 0 8px 10px -6px rgba(159, 139, 248, 0.08)',
+            'bubble': '0 16px 32px -8px rgba(142, 122, 230, 0.22)',
+            'glass': '0 8px 32px 0 rgba(140, 140, 180, 0.12)'
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      min-height: 100dvh;
+      min-height: -webkit-fill-available;
+      background: linear-gradient(145deg, #F8F6FF 0%, #FFF5F2 50%, #F0FDF8 100%);
+      font-family: 'Kanit', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    .safe-top {
+      padding-top: env(safe-area-inset-top, 16px);
+    }
+    .safe-bottom {
+      padding-bottom: calc(env(safe-area-inset-bottom, 16px) + 70px);
+    }
+    .bottom-nav-safe {
+      padding-bottom: env(safe-area-inset-bottom, 12px);
+    }
+    input[type=number]::-webkit-inner-spin-button, 
+    input[type=number]::-webkit-outer-spin-button { 
+      -webkit-appearance: none; 
+      margin: 0; 
+    }
+    input[type=number] {
+      -moz-appearance: textfield;
+    }
+    .custom-scroll::-webkit-scrollbar {
+      width: 4px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: #E0DAEB;
+      border-radius: 999px;
+    }
+    .tap-bounce {
+      transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .tap-bounce:active {
+      transform: scale(0.95);
+    }
+    .k-card {
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.95);
+    }
+    @keyframes floatLight {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-4px); }
+    }
+    .animate-float {
+      animation: floatLight 4s ease-in-out infinite;
+    }
+    .page-view {
+      transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
+    }
+  </style>
+</head>
+
+<body class="flex flex-col items-center justify-between text-korean-ink overflow-x-hidden safe-top safe-bottom">
+
+  <main class="w-full max-w-md mx-auto flex-1 flex flex-col px-4 pt-2 pb-2">
+    
+    <!-- Top Bar -->
+    <header class="flex items-center justify-between px-1.5 pt-1 mb-4">
+      <div class="flex items-center space-x-2.5">
+        <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-purple-200 via-pink-100 to-amber-100 flex items-center justify-center shadow-soft border border-white text-xl animate-float">
+          🛵
+        </div>
+        <div>
+          <span class="inline-block text-[11px] font-semibold text-korean-lilac uppercase tracking-wider bg-purple-50 px-2 py-0.5 rounded-full border border-purple-100">
+            Rider Mate
+          </span>
+          <h1 id="pageTitle" class="text-base font-bold text-slate-800 tracking-tight leading-tight">
+            บันทึกระยะทาง
+          </h1>
+        </div>
+      </div>
+      
+      <!-- Current Date Tag -->
+      <div class="text-right">
+        <div id="displayDate" class="text-xs font-medium text-korean-sub bg-white/80 px-3 py-1.5 rounded-2xl border border-white/90 shadow-sm">
+          กำลังโหลด...
+        </div>
+      </div>
+    </header>
+
+    <!-- ================= PAGE 1: RECORDING PAGE (หน้าบันทึกหลัก ไม่ยาว ไม่รก) ================= -->
+    <div id="pageRecord" class="page-view flex-1 flex flex-col space-y-4">
+      
+      <!-- ช่องที่ 2: Card แสดงระยะทางสะสมรอบปัจจุบัน (Reset เมื่อกดปุ่มที่รถ) -->
+      <section class="relative overflow-hidden rounded-3xl p-5 shadow-bubble border border-white/80 bg-gradient-to-br from-[#ECE7FE] via-[#F8EDFF] to-[#FFEBE6]">
+        <div class="absolute -right-6 -bottom-6 w-32 h-32 bg-gradient-to-br from-pink-300/20 to-purple-400/20 rounded-full blur-xl pointer-events-none"></div>
+        
+        <div class="flex justify-between items-start relative z-10">
+          <div>
+            <div class="inline-flex items-center space-x-1.5 bg-white/75 backdrop-blur-md px-2.5 py-1 rounded-full text-xs font-semibold text-korean-lavenderDark border border-white">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span>ระยะสะสมรอบนี้ (Trip)</span>
+            </div>
+            <p class="text-[11px] text-slate-500 mt-1 pl-0.5">นับสะสมจนกว่าจะกดรีเซ็ตที่ตรวจรถ</p>
+          </div>
+
+          <!-- Reset Button -->
+          <button 
+            id="openResetModalBtn"
+            onclick="openResetConfirm()" 
+            class="tap-bounce flex items-center space-x-1.5 text-xs font-medium text-rose-500 bg-white/90 hover:bg-rose-50 px-3 py-1.5 rounded-2xl border border-rose-100 shadow-sm transition-all"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <span>รีเซ็ตทริป</span>
+          </button>
+        </div>
+
+        <div class="mt-4 mb-1 flex items-baseline justify-between relative z-10">
+          <div class="flex items-baseline space-x-2">
+            <span id="currentBatchDistance" class="font-display text-5xl font-extrabold text-slate-800 tracking-tight drop-shadow-sm">0.0</span>
+            <span class="text-sm font-semibold text-slate-600">กิโลเมตร</span>
+          </div>
+          <div class="text-[11px] font-medium text-slate-500 bg-white/60 px-2.5 py-1 rounded-xl">
+            รอบปัจจุบัน
+          </div>
+        </div>
+      </section>
+
+      <!-- ช่องที่ 1: กรอกเลขกิโลเมตร พร้อมปุ่มบันทึก -->
+      <section class="k-card rounded-3xl p-5 shadow-glass space-y-3.5">
+        <div class="flex justify-between items-center">
+          <label for="kmInput" class="text-xs font-semibold text-slate-700 flex items-center space-x-1.5">
+            <span>✨</span>
+            <span>กรอกระยะทางที่วิ่ง (Trip ล่าสุด)</span>
+          </label>
+          <span class="text-[11px] text-slate-400">ระบุเป็นตัวเลขทศนิยมได้</span>
+        </div>
+
+        <!-- Main Input Display -->
+        <div class="relative flex items-center">
+          <input 
+            id="kmInput" 
+            type="number" 
+            step="any"
+            inputmode="decimal" 
+            placeholder="0.0" 
+            class="w-full bg-[#F6F5FB] border border-purple-100/90 text-4xl font-display font-bold text-center text-slate-800 py-3.5 px-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-korean-lilac/40 focus:bg-white transition-all placeholder:text-slate-300 shadow-inner"
+          >
+          <span class="absolute right-4 text-xs font-bold text-slate-400 uppercase tracking-wide">km</span>
+        </div>
+
+        <!-- Save Button -->
+        <button 
+          id="btnSaveDistance"
+          onclick="saveDistance()" 
+          class="tap-bounce w-full bg-gradient-to-r from-[#9A86F8] via-[#B295F8] to-[#E9A4D8] text-white font-semibold text-base py-3.5 rounded-2xl shadow-bubble flex items-center justify-center space-x-2 transition-all"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white/90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+          </svg>
+          <span>บันทึกค่าระยะทาง</span>
+        </button>
+      </section>
+
+      <!-- สรุปสถิติด่วนประจำวัน (Clean summary แทนรายการยาว) -->
+      <section class="grid grid-cols-2 gap-3">
+        <div class="k-card p-4 rounded-2xl shadow-sm flex flex-col justify-between border-emerald-100/70">
+          <div class="flex items-center space-x-1.5 text-xs text-slate-500 font-medium">
+            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+            <span>วิ่งวันนี้</span>
+          </div>
+          <div class="mt-2 flex items-baseline space-x-1">
+            <span id="todayTotalKm" class="font-display text-2xl font-bold text-emerald-600">0.0</span>
+            <span class="text-xs text-slate-400 font-normal">กม.</span>
+          </div>
+        </div>
+
+        <div class="k-card p-4 rounded-2xl shadow-sm flex flex-col justify-between border-purple-100/70">
+          <div class="flex items-center space-x-1.5 text-xs text-slate-500 font-medium">
+            <span class="w-2 h-2 rounded-full bg-purple-400"></span>
+            <span>สะสมทั้งหมด</span>
+          </div>
+          <div class="mt-2 flex items-baseline space-x-1">
+            <span id="allTimeTotalKm" class="font-display text-2xl font-bold text-purple-600">0.0</span>
+            <span class="text-xs text-slate-400 font-normal">กม.</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Short link to view history -->
+      <div class="pt-1">
+        <button onclick="switchTab('history')" class="tap-bounce w-full py-3 rounded-2xl bg-white/60 hover:bg-white/90 text-xs font-semibold text-korean-lilac border border-purple-100 flex items-center justify-center space-x-1.5 shadow-sm transition-all">
+          <span>🗓️ ดูประวัติบันทึกรายวันทั้งหมด</span>
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      </div>
+
+    </div>
+
+    <!-- ================= PAGE 2: HISTORY PAGE (หน้าแสดงประวัติรายวันแบบเต็มหน้า) ================= -->
+    <div id="pageHistory" class="page-view flex-1 flex flex-col space-y-3 hidden">
+      
+      <!-- History Header Overview -->
+      <div class="k-card rounded-2xl p-4 shadow-sm flex items-center justify-between">
+        <div>
+          <h2 class="text-xs font-bold uppercase tracking-wider text-slate-500">บันทึกทั้งหมด</h2>
+          <div class="flex items-baseline space-x-1.5 mt-0.5">
+            <span id="historyDaysTotal" class="font-display text-2xl font-bold text-slate-800">0</span>
+            <span class="text-xs text-slate-500 font-normal">วันที่มีการวิ่ง</span>
+          </div>
+        </div>
+        <div class="text-right">
+          <span class="text-[11px] text-slate-400 block">ระยะทางรวมทั้งสิ้น</span>
+          <span id="historyKmTotal" class="font-display text-base font-bold text-korean-lilac">0.0 กม.</span>
+        </div>
+      </div>
+
+      <!-- History Items Header with Search/Count -->
+      <div class="flex items-center justify-between px-1 pt-1">
+        <span class="text-xs font-semibold text-slate-700">รายการประจำวัน</span>
+        <span id="historyCountBadge" class="text-[11px] font-medium bg-purple-50 text-korean-lilac px-2.5 py-0.5 rounded-full border border-purple-100">
+          0 วัน
+        </span>
+      </div>
+
+      <!-- Full-Height Scrollable History List -->
+      <div id="historyListContainer" class="flex-1 space-y-2.5 overflow-y-auto custom-scroll pr-1 pb-4">
+        <!-- Daily history cards injected by JS -->
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- ================= BOTTOM NAVIGATION BAR ================= -->
+  <nav class="fixed bottom-0 left-0 right-0 z-40 bg-white/85 backdrop-blur-lg border-t border-purple-100/70 shadow-lg bottom-nav-safe flex justify-center">
+    <div class="w-full max-w-md grid grid-cols-2 px-6 py-2">
+      <!-- Tab 1: บันทึก -->
+      <button 
+        id="tabRecordBtn"
+        onclick="switchTab('record')" 
+        class="tap-bounce flex flex-col items-center justify-center py-1.5 rounded-xl text-korean-lilac font-bold transition-all"
+      >
+        <div class="relative">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 4v16m8-8H4" />
+          </svg>
+          <span id="tabDotRecord" class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-korean-lilac"></span>
+        </div>
+        <span class="text-[11px] mt-1">หน้าบันทึก</span>
+      </button>
+
+      <!-- Tab 2: ประวัติ -->
+      <button 
+        id="tabHistoryBtn"
+        onclick="switchTab('history')" 
+        class="tap-bounce flex flex-col items-center justify-center py-1.5 rounded-xl text-slate-400 font-medium hover:text-slate-600 transition-all"
+      >
+        <div class="relative">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          <span id="tabDotHistory" class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-korean-lilac hidden"></span>
+        </div>
+        <span class="text-[11px] mt-1">ประวัติ</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ================= MODALS & TOASTS ================= -->
+  <!-- Toast Notification -->
+  <div id="toastNotification" class="fixed bottom-24 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none px-4 py-2.5 rounded-2xl bg-slate-900/90 text-white text-xs font-medium shadow-xl flex items-center space-x-2 backdrop-blur-md">
+    <span id="toastIcon">✨</span>
+    <span id="toastText">บันทึกข้อมูลเรียบร้อย</span>
+  </div>
+
+  <!-- Reset Trip Modal -->
+  <div id="resetModal" class="fixed inset-0 z-50 hidden bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 transition-all">
+    <div class="k-card w-full max-w-xs rounded-3xl p-5 shadow-bubble space-y-4 border border-white text-center transform scale-95 transition-transform duration-200" id="resetModalBox">
+      <div class="w-12 h-12 rounded-2xl bg-rose-50 text-rose-500 mx-auto flex items-center justify-center text-2xl shadow-inner">
+        🔄
+      </div>
+      <div class="space-y-1">
+        <h3 class="text-base font-bold text-slate-800">รีเซ็ตระยะสะสมรอบนี้?</h3>
+        <p class="text-xs text-slate-500 leading-relaxed">
+          ใช้เมื่อคุณกดปุ่ม Reset ที่หน้าปัดรถแล้ว<br>
+          <span class="text-rose-400 font-medium">ประวัติการวิ่งรายวันจะไม่ถูกลบ</span>
+        </p>
+      </div>
+      <div class="grid grid-cols-2 gap-2 pt-1">
+        <button onclick="closeResetModal()" class="tap-bounce py-2.5 rounded-xl bg-slate-100 text-slate-600 text-xs font-semibold hover:bg-slate-200">
+          ยกเลิก
+        </button>
+        <button onclick="confirmResetCurrentTrip()" class="tap-bounce py-2.5 rounded-xl bg-rose-500 text-white text-xs font-semibold shadow-md shadow-rose-300/40 hover:bg-rose-600">
+          ยืนยันรีเซ็ต
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Record Modal -->
+  <div id="editModal" class="fixed inset-0 z-50 hidden bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="k-card w-full max-w-xs rounded-3xl p-5 shadow-bubble space-y-4 border border-white transform scale-95 transition-transform duration-200" id="editModalBox">
+      <div class="flex justify-between items-center pb-1 border-b border-slate-100">
+        <div class="flex items-center space-x-1.5">
+          <span class="text-base">✏️</span>
+          <h3 class="text-sm font-bold text-slate-800">แก้ไขระยะทาง</h3>
+        </div>
+        <button onclick="closeEditModal()" class="text-slate-400 hover:text-slate-600 p-1 text-xs">✕</button>
+      </div>
+      <div>
+        <p id="editModalDateLabel" class="text-xs text-korean-lilac font-medium mb-2"></p>
+        <div class="relative">
+          <input 
+            id="editKmInput" 
+            type="number" 
+            step="any" 
+            inputmode="decimal" 
+            class="w-full bg-[#FAF9FD] border border-purple-100 text-2xl font-display font-bold text-center text-slate-800 py-3 rounded-xl focus:ring-2 focus:ring-korean-lilac/40 focus:outline-none"
+          >
+          <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400">km</span>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-2 pt-2">
+        <button onclick="closeEditModal()" class="tap-bounce py-2.5 rounded-xl bg-slate-100 text-slate-600 text-xs font-semibold">
+          ยกเลิก
+        </button>
+        <button onclick="confirmEditRecord()" class="tap-bounce py-2.5 rounded-xl bg-korean-lilac text-white text-xs font-semibold shadow-md shadow-purple-300/40">
+          บันทึกการแก้ไข
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Record Modal -->
+  <div id="deleteModal" class="fixed inset-0 z-50 hidden bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="k-card w-full max-w-xs rounded-3xl p-5 shadow-bubble space-y-4 border border-white text-center transform scale-95 transition-transform duration-200" id="deleteModalBox">
+      <div class="w-12 h-12 rounded-2xl bg-rose-50 text-rose-500 mx-auto flex items-center justify-center text-2xl">
+        🗑️
+      </div>
+      <div class="space-y-1">
+        <h3 class="text-base font-bold text-slate-800">ลบประวัติของวันนี้?</h3>
+        <p id="deleteModalDateLabel" class="text-xs text-slate-500"></p>
+      </div>
+      <div class="grid grid-cols-2 gap-2 pt-1">
+        <button onclick="closeDeleteModal()" class="tap-bounce py-2.5 rounded-xl bg-slate-100 text-slate-600 text-xs font-semibold">
+          ยกเลิก
+        </button>
+        <button onclick="confirmDeleteRecord()" class="tap-bounce py-2.5 rounded-xl bg-rose-500 text-white text-xs font-semibold shadow-md shadow-rose-300/40">
+          ลบข้อมูล
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // State storage keys
+    const KEY_RECORDS = 'k_moto_records_v2';
+    const KEY_BATCH = 'k_moto_batch_km_v2';
+
+    let records = [];
+    let currentBatchKm = 0;
+    let pendingEditDate = null;
+    let pendingDeleteDate = null;
+    let activeTab = 'record'; // 'record' or 'history'
+
+    // Load persisted state
+    function loadSavedData() {
+      try {
+        const storedRec = localStorage.getItem(KEY_RECORDS);
+        const storedBatch = localStorage.getItem(KEY_BATCH);
+        records = storedRec ? JSON.parse(storedRec) : [];
+        currentBatchKm = storedBatch ? parseFloat(storedBatch) : 0;
+        if (isNaN(currentBatchKm)) currentBatchKm = 0;
+      } catch (err) {
+        console.error('Error reading localStorage', err);
+        records = [];
+        currentBatchKm = 0;
+      }
+    }
+
+    // Save states
+    function persistData() {
+      try {
+        localStorage.setItem(KEY_RECORDS, JSON.stringify(records));
+        localStorage.setItem(KEY_BATCH, currentBatchKm.toString());
+      } catch (err) {
+        console.error('Error writing to localStorage', err);
+      }
+    }
+
+    // Date Utilities
+    function getTodayKey() {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, '0');
+      const d = String(now.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    function formatThaiDateLong(dateStr) {
+      if (!dateStr) return '';
+      const [year, month, day] = dateStr.split('-');
+      const thaiMonths = [
+        'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+        'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
+      ];
+      const thaiYear = parseInt(year) + 543;
+      return `${parseInt(day)} ${thaiMonths[parseInt(month) - 1]} ${thaiYear}`;
+    }
+
+    function formatThaiDateShort(dateStr) {
+      if (!dateStr) return '';
+      const [year, month, day] = dateStr.split('-');
+      const shortMonths = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+      const thaiYear = (parseInt(year) + 543).toString().slice(-2);
+      return `${parseInt(day)} ${shortMonths[parseInt(month) - 1]} ${thaiYear}`;
+    }
+
+    // Toast Notification helper
+    let toastTimeout = null;
+    function showToast(message, icon = '✨') {
+      const toast = document.getElementById('toastNotification');
+      const toastText = document.getElementById('toastText');
+      const toastIcon = document.getElementById('toastIcon');
+      
+      toastText.textContent = message;
+      toastIcon.textContent = icon;
+      
+      clearTimeout(toastTimeout);
+      toast.classList.remove('opacity-0', 'translate-y-20', 'pointer-events-none');
+      toast.classList.add('opacity-100', 'translate-y-0');
+
+      toastTimeout = setTimeout(() => {
+        toast.classList.remove('opacity-100', 'translate-y-0');
+        toast.classList.add('opacity-0', 'translate-y-20', 'pointer-events-none');
+      }, 2300);
+    }
+
+    // Switch Page View (Tab Management)
+    function switchTab(tabName) {
+      activeTab = tabName;
+      const pageRecord = document.getElementById('pageRecord');
+      const pageHistory = document.getElementById('pageHistory');
+      const tabRecordBtn = document.getElementById('tabRecordBtn');
+      const tabHistoryBtn = document.getElementById('tabHistoryBtn');
+      const tabDotRecord = document.getElementById('tabDotRecord');
+      const tabDotHistory = document.getElementById('tabDotHistory');
+      const pageTitle = document.getElementById('pageTitle');
+
+      if (tabName === 'record') {
+        pageRecord.classList.remove('hidden');
+        pageHistory.classList.add('hidden');
+        pageTitle.textContent = 'บันทึกระยะทาง';
+
+        // Styling Tab Buttons
+        tabRecordBtn.className = 'tap-bounce flex flex-col items-center justify-center py-1.5 rounded-xl text-korean-lilac font-bold transition-all';
+        tabHistoryBtn.className = 'tap-bounce flex flex-col items-center justify-center py-1.5 rounded-xl text-slate-400 font-medium hover:text-slate-600 transition-all';
+        tabDotRecord.classList.remove('hidden');
+        tabDotHistory.classList.add('hidden');
+      } else {
+        pageRecord.classList.add('hidden');
+        pageHistory.classList.remove('hidden');
+        pageTitle.textContent = 'ประวัติรายวัน';
+
+        // Styling Tab Buttons
+        tabHistoryBtn.className = 'tap-bounce flex flex-col items-center justify-center py-1.5 rounded-xl text-korean-lilac font-bold transition-all';
+        tabRecordBtn.className = 'tap-bounce flex flex-col items-center justify-center py-1.5 rounded-xl text-slate-400 font-medium hover:text-slate-600 transition-all';
+        tabDotHistory.classList.remove('hidden');
+        tabDotRecord.classList.add('hidden');
+      }
+
+      renderApp();
+    }
+
+    function renderApp() {
+      const todayStr = getTodayKey();
+      document.getElementById('displayDate').textContent = formatThaiDateShort(todayStr);
+
+      // Current batch distance
+      document.getElementById('currentBatchDistance').textContent = currentBatchKm.toFixed(1);
+
+      // Calculations
+      let allTotal = 0;
+      let todayTotal = 0;
+
+      records.forEach(item => {
+        const val = Number(item.km) || 0;
+        allTotal += val;
+        if (item.date === todayStr) {
+          todayTotal += val;
+        }
+      });
+
+      // Quick summary card on Page 1
+      document.getElementById('todayTotalKm').textContent = todayTotal.toFixed(1);
+      document.getElementById('allTimeTotalKm').textContent = allTotal.toFixed(1);
+
+      // Summary on Page 2 (History)
+      document.getElementById('historyDaysTotal').textContent = records.length;
+      document.getElementById('historyKmTotal').textContent = `${allTotal.toFixed(1)} กม.`;
+      document.getElementById('historyCountBadge').textContent = `${records.length} วัน`;
+
+      // Render full history list on Page 2
+      const listContainer = document.getElementById('historyListContainer');
+      listContainer.innerHTML = '';
+
+      if (records.length === 0) {
+        listContainer.innerHTML = `
+          <div class="text-center py-12 px-4 rounded-2xl border border-dashed border-purple-200/80 bg-white/40">
+            <div class="text-3xl mb-2 opacity-70">🗓️</div>
+            <p class="text-xs text-slate-500 font-medium">ยังไม่มีประวัติการบันทึก</p>
+            <p class="text-[11px] text-slate-400 mt-0.5">เมื่อบันทึกระยะทาง รายการจะแสดงที่หน้านี้</p>
+          </div>
+        `;
+        return;
+      }
+
+      const sorted = [...records].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      sorted.forEach(item => {
+        const isToday = item.date === todayStr;
+        const card = document.createElement('div');
+        card.className = `p-3.5 rounded-2xl border transition-all flex items-center justify-between ${
+          isToday 
+            ? 'k-card border-purple-200 shadow-soft bg-gradient-to-r from-white via-purple-50/25 to-white' 
+            : 'k-card border-slate-100 shadow-sm'
+        }`;
+
+        card.innerHTML = `
+          <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-2xl ${isToday ? 'bg-purple-100 text-korean-lilac' : 'bg-slate-100 text-slate-500'} flex items-center justify-center text-base font-semibold shadow-inner">
+              ${isToday ? '🚩' : '📍'}
+            </div>
+            <div>
+              <div class="flex items-center space-x-1.5">
+                <span class="text-xs font-semibold ${isToday ? 'text-slate-800' : 'text-slate-700'}">
+                  ${formatThaiDateShort(item.date)}
+                </span>
+                ${isToday ? '<span class="text-[10px] font-semibold bg-purple-100 text-korean-lilac px-2 py-0.2 rounded-full">วันนี้</span>' : ''}
+              </div>
+              <div class="flex items-baseline space-x-1 mt-0.5">
+                <span class="font-display text-lg font-bold text-slate-800">${Number(item.km).toFixed(1)}</span>
+                <span class="text-[11px] text-slate-400 font-medium">กิโลเมตร</span>
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center space-x-1">
+            <button onclick="openEditModal('${item.date}')" class="tap-bounce p-2 rounded-xl text-slate-400 hover:text-purple-600 hover:bg-purple-50 transition-colors" title="แก้ไข">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+              </svg>
+            </button>
+            <button onclick="openDeleteModal('${item.date}')" class="tap-bounce p-2 rounded-xl text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors" title="ลบ">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          </div>
+        `;
+        listContainer.appendChild(card);
+      });
+    }
+
+    function saveDistance() {
+      const input = document.getElementById('kmInput');
+      const val = parseFloat(input.value);
+
+      if (isNaN(val) || val <= 0) {
+        showToast('กรุณาระบุเลขกิโลเมตรที่ถูกต้อง', '⚠️');
+        input.focus();
+        return;
+      }
+
+      const today = getTodayKey();
+      
+      // 1. เพิ่มใน Current Batch (Trip สะสมรอบนี้)
+      currentBatchKm = parseFloat((currentBatchKm + val).toFixed(1));
+
+      // 2. เพิ่มใน Daily Record วันนี้
+      const existingIdx = records.findIndex(r => r.date === today);
+      if (existingIdx > -1) {
+        records[existingIdx].km = parseFloat((Number(records[existingIdx].km) + val).toFixed(1));
+      } else {
+        records.push({ date: today, km: parseFloat(val.toFixed(1)) });
+      }
+
+      persistData();
+      renderApp();
+      input.value = '';
+      showToast(`บันทึก +${val.toFixed(1)} กม. เรียบร้อย`, '🛵');
+    }
+
+    function openResetConfirm() {
+      if (currentBatchKm <= 0) {
+        showToast('ระยะทางสะสมรอบนี้เป็น 0 อยู่แล้ว', '🌱');
+        return;
+      }
+      const modal = document.getElementById('resetModal');
+      const box = document.getElementById('resetModalBox');
+      modal.classList.remove('hidden');
+      setTimeout(() => box.classList.remove('scale-95'), 10);
+    }
+
+    function closeResetModal() {
+      const modal = document.getElementById('resetModal');
+      const box = document.getElementById('resetModalBox');
+      box.classList.add('scale-95');
+      setTimeout(() => modal.classList.add('hidden'), 150);
+    }
+
+    function confirmResetCurrentTrip() {
+      currentBatchKm = 0;
+      persistData();
+      renderApp();
+      closeResetModal();
+      showToast('รีเซ็ตระยะสะสมรอบนี้เป็น 0 แล้ว', '✨');
+    }
+
+    function openEditModal(date) {
+      const target = records.find(r => r.date === date);
+      if (!target) return;
+
+      pendingEditDate = date;
+      document.getElementById('editModalDateLabel').textContent = `วันที่: ${formatThaiDateLong(date)}`;
+      document.getElementById('editKmInput').value = Number(target.km).toFixed(1);
+
+      const modal = document.getElementById('editModal');
+      const box = document.getElementById('editModalBox');
+      modal.classList.remove('hidden');
+      setTimeout(() => box.classList.remove('scale-95'), 10);
+      document.getElementById('editKmInput').focus();
+    }
+
+    function closeEditModal() {
+      const modal = document.getElementById('editModal');
+      const box = document.getElementById('editModalBox');
+      box.classList.add('scale-95');
+      setTimeout(() => {
+        modal.classList.add('hidden');
+        pendingEditDate = null;
+      }, 150);
+    }
+
+    function confirmEditRecord() {
+      if (!pendingEditDate) return;
+      const input = document.getElementById('editKmInput');
+      const val = parseFloat(input.value);
+
+      if (isNaN(val) || val < 0) {
+        showToast('กรุณาระบุตัวเลขที่ถูกต้อง', '⚠️');
+        return;
+      }
+
+      const target = records.find(r => r.date === pendingEditDate);
+      if (target) {
+        target.km = parseFloat(val.toFixed(1));
+        persistData();
+        renderApp();
+        showToast('แก้ไขข้อมูลเรียบร้อย', '✏️');
+      }
+      closeEditModal();
+    }
+
+    function openDeleteModal(date) {
+      pendingDeleteDate = date;
+      document.getElementById('deleteModalDateLabel').textContent = `${formatThaiDateLong(date)}`;
+
+      const modal = document.getElementById('deleteModal');
+      const box = document.getElementById('deleteModalBox');
+      modal.classList.remove('hidden');
+      setTimeout(() => box.classList.remove('scale-95'), 10);
+    }
+
+    function closeDeleteModal() {
+      const modal = document.getElementById('deleteModal');
+      const box = document.getElementById('deleteModalBox');
+      box.classList.add('scale-95');
+      setTimeout(() => {
+        modal.classList.add('hidden');
+        pendingDeleteDate = null;
+      }, 150);
+    }
+
+    function confirmDeleteRecord() {
+      if (!pendingDeleteDate) return;
+      records = records.filter(r => r.date !== pendingDeleteDate);
+      persistData();
+      renderApp();
+      closeDeleteModal();
+      showToast('ลบรายการเรียบร้อย', '🗑️');
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      loadSavedData();
+      renderApp();
+
+      document.getElementById('kmInput').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') saveDistance();
+      });
+      document.getElementById('editKmInput').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') confirmEditRecord();
+      });
+    });
+  </script>
+</body>
+</html>
