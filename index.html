@@ -9,10 +9,13 @@
   <meta name="apple-mobile-web-app-title" content="Trip Tracker">
   <title>บันทึกระยะทาง & น้ำมันเครื่อง</title>
   
+  <!-- ฝัง Web App Manifest แบบ All-in-One (หัวใจสำคัญเพื่อให้ Chrome ยอมให้ติดตั้ง) -->
+  <link rel="manifest" href='data:application/manifest+json,{"name":"บันทึกระยะทาง","short_name":"Trip Tracker","start_url":".","display":"standalone","background_color":"#FAF9F6","theme_color":"#FAF9F6","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/3063/3063823.png","sizes":"192x192","type":"image/png"},{"src":"https://cdn-icons-png.flaticon.com/512/3063/3063823.png","sizes":"512x512","type":"image/png"}]}'>
+
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   
-  <!-- Google Fonts: Prompt & Plus Jakarta Sans -->
+  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -23,9 +26,7 @@
       background-color: #FAF9F6;
       -webkit-tap-highlight-color: transparent;
     }
-    .num-font { 
-      font-family: 'Plus Jakarta Sans', sans-serif; 
-    }
+    .num-font { font-family: 'Plus Jakarta Sans', sans-serif; }
     .korean-card {
       background: #FFFFFF;
       border: 1px solid #F1EFEA;
@@ -41,26 +42,20 @@
       -webkit-appearance: none; 
       margin: 0; 
     }
-    input[type=number] {
-      -moz-appearance: textfield;
-    }
-    .safe-bottom {
-      padding-bottom: max(1.25rem, env(safe-area-inset-bottom));
-    }
+    input[type=number] { -moz-appearance: textfield; }
   </style>
 </head>
 <body class="text-stone-700 min-h-screen flex flex-col justify-between select-none antialiased">
 
-  <!-- Toast Notification แจ้งเตือนสไตล์เกาหลี -->
+  <!-- Toast Notification -->
   <div id="toast" class="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-stone-800/85 backdrop-blur-md text-stone-50 px-4 py-2.5 rounded-full text-xs font-medium shadow-xl transition-all duration-300 opacity-0 pointer-events-none -translate-y-3 flex items-center gap-2">
     <span id="toastIcon" class="text-sm">✨</span>
     <span id="toastMsg">บันทึกสำเร็จ</span>
   </div>
 
-  <!-- เนื้อหาหลัก -->
   <main class="w-full max-w-md mx-auto p-4 pb-28 space-y-4 flex-1">
     
-    <!-- Top Bar / Header -->
+    <!-- Top Bar -->
     <header class="flex items-center justify-between pt-1.5 px-0.5">
       <div>
         <div class="flex items-center gap-1.5">
@@ -70,7 +65,6 @@
         <div id="todayBadge" class="text-[11px] text-stone-400 font-normal pl-0.5 mt-0.5">--/--/--</div>
       </div>
       
-      <!-- ปุ่มสลับโหมด -->
       <button onclick="toggleMode()" class="bg-white border border-stone-200/80 hover:border-violet-300 active:scale-95 text-stone-600 px-3 py-1.5 rounded-full text-xs font-medium shadow-sm transition-all flex items-center gap-1.5">
         <span class="text-amber-500">⚡</span>
         <span id="modeLabelText" class="text-stone-700 font-medium">โหมด: ไมล์ดิจิทัล</span>
@@ -80,7 +74,7 @@
     <!-- Page 1: หน้าบันทึกหลัก -->
     <div id="pageRecord" class="space-y-4">
       
-      <!-- การ์ดน้ำมันเครื่อง (Oil Change Tracker) สไตล์พาสเทล -->
+      <!-- การ์ดน้ำมันเครื่อง -->
       <section class="korean-oil-card rounded-3xl p-4 relative overflow-hidden">
         <div class="flex items-center justify-between mb-3">
           <div class="flex items-center gap-2.5">
@@ -107,7 +101,6 @@
           </button>
         </div>
 
-        <!-- Progress Bar นุ่มนวล -->
         <div class="w-full bg-amber-200/40 rounded-full h-2.5 mt-3 overflow-hidden p-0.5">
           <div id="oilProgressBar" class="bg-gradient-to-r from-amber-400 via-orange-400 to-rose-400 h-full rounded-full transition-all duration-500 shadow-xs" style="width: 0%;"></div>
         </div>
@@ -118,7 +111,7 @@
         </div>
       </section>
 
-      <!-- กล่องโหมดดิจิทัล -->
+      <!-- โหมดดิจิทัล -->
       <section id="boxDigital" class="korean-card rounded-3xl p-5 space-y-3.5">
         <div class="flex justify-between items-center">
           <div>
@@ -139,7 +132,7 @@
         </button>
       </section>
 
-      <!-- กล่องโหมดอนาล็อก (ตัดแถบแสดงผลต่างออกเรียบร้อย) -->
+      <!-- โหมดอนาล็อก -->
       <section id="boxAnalog" class="korean-card rounded-3xl p-5 space-y-3.5 hidden">
         <div class="flex justify-between items-center">
           <div>
@@ -151,7 +144,6 @@
           </button>
         </div>
 
-        <!-- กล่องแสดงเลขไมล์ตั้งต้นก่อนหน้า -->
         <div class="bg-stone-50 border border-stone-200/60 rounded-2xl p-3 flex justify-between items-center">
           <div>
             <span class="text-[11px] text-stone-500 block font-normal">เลขไมล์ก่อนหน้า (ตั้งต้น)</span>
@@ -163,7 +155,6 @@
           </div>
         </div>
 
-        <!-- ช่องกรอกเลขไมล์ปัจจุบัน -->
         <div>
           <label class="block text-[11px] font-normal text-stone-500 mb-1.5">กรอกเลขไมล์ปัจจุบันบนหน้าปัดรถ</label>
           <div class="relative">
@@ -173,13 +164,12 @@
           </div>
         </div>
 
-        <!-- ปุ่มคำนวณและบันทึกค่า -->
         <button onclick="saveAnalogDistance()" class="w-full bg-gradient-to-r from-rose-400 to-violet-500 hover:opacity-95 active:scale-[0.98] text-white font-medium py-3 rounded-2xl shadow-sm shadow-rose-200 transition-all text-xs">
           คำนวณและบันทึกค่า (Enter)
         </button>
       </section>
 
-      <!-- แถบสรุปยอดสะสมวันนี้ -->
+      <!-- สรุปยอดสะสมวันนี้ -->
       <div class="korean-card rounded-2xl p-3.5 px-4 flex items-center justify-between">
         <div>
           <span class="text-[11px] text-stone-400 block font-normal">วิ่งสะสมเฉพาะวันนี้</span>
@@ -202,16 +192,12 @@
         <h2 class="text-xs font-semibold text-stone-800 tracking-tight">ประวัติบันทึกรายวัน</h2>
         <span id="historyDaysBadge" class="text-[10px] bg-stone-100 text-stone-500 px-2.5 py-0.5 rounded-full font-medium">0 วัน</span>
       </div>
-      
-      <!-- รายการประวัติ -->
-      <div id="historyListContainer" class="space-y-2.5">
-        <!-- แสดงผ่าน JS -->
-      </div>
+      <div id="historyListContainer" class="space-y-2.5"></div>
     </div>
 
   </main>
 
-  <!-- Bottom Navigation บาร์นำทางด้านล่างสไตล์เกาหลี -->
+  <!-- Bottom Navigation -->
   <nav class="fixed bottom-3 left-4 right-4 max-w-md mx-auto bg-white/85 backdrop-blur-xl border border-stone-200/60 rounded-3xl p-1.5 flex justify-around items-center shadow-lg shadow-stone-200/50 z-30">
     <button id="navRecord" onclick="switchTab('record')" class="flex-1 py-1.5 rounded-2xl flex flex-col items-center justify-center text-violet-600 bg-violet-50/70 transition-all">
       <span class="text-base">🛵</span>
@@ -223,7 +209,7 @@
     </button>
   </nav>
 
-  <!-- Custom Pop-up Modal (ป๊อปอัปแจ้งเตือนและแก้ไขข้อมูล) -->
+  <!-- Custom Pop-up Modal -->
   <div id="customModal" class="fixed inset-0 bg-stone-900/30 backdrop-blur-xs z-50 flex items-center justify-center p-5 hidden opacity-0 transition-opacity duration-200">
     <div class="bg-white w-full max-w-xs rounded-3xl p-5 space-y-3.5 korean-card text-center transform transition-all duration-200 scale-95" id="modalCard">
       <div id="modalEmoji" class="text-3xl">✨</div>
@@ -241,8 +227,8 @@
     </div>
   </div>
 
-  <!-- PWA Install Prompt Pop-up (ป๊อปอัปชวนติดตั้งลงหน้าจอเมื่อยังไม่ได้ติดตั้ง) -->
-  <div id="pwaInstallModal" class="fixed inset-0 bg-stone-900/30 backdrop-blur-xs z-50 flex items-center justify-center p-5 hidden opacity-0 transition-opacity duration-200">
+  <!-- PWA Install Modal (ปรับปรุงให้บังคับแสดงคำแนะนำทันทีหากยังไม่ได้ติดตั้ง) -->
+  <div id="pwaInstallModal" class="fixed inset-0 bg-stone-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-5 hidden opacity-0 transition-opacity duration-200">
     <div class="bg-white w-full max-w-xs rounded-3xl p-5 space-y-3.5 korean-card text-center transform transition-all duration-200 scale-95" id="pwaInstallCard">
       <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-500 mx-auto flex items-center justify-center text-2xl shadow-inner">
         📲
@@ -250,17 +236,16 @@
       <div>
         <h3 class="text-xs font-semibold text-stone-800">ติดตั้งแอปเพื่อใช้งานสะดวกขึ้น</h3>
         <p class="text-[11px] text-stone-500 mt-1 leading-relaxed">
-          ติดตั้งลงบนหน้าจอมือถือของคุณ เปิดบันทึกระยะทางได้ทันใจเสมือนแอปจริง
+          ติดตั้งลงบนหน้าจอมือถือของคุณ เปิดใช้งานได้เต็มจอและเร็วกว่าเดิม
         </p>
       </div>
 
-      <!-- คำแนะนำสำหรับ iOS Safari -->
-      <div id="iosInstruction" class="hidden bg-stone-50 p-2.5 rounded-2xl text-[10px] text-stone-600 text-left border border-stone-200/60 space-y-1">
+      <!-- คำแนะนำสำหรับเบราว์เซอร์มือถือทั่วไป -->
+      <div id="browserInstruction" class="hidden bg-stone-50 p-2.5 rounded-2xl text-[10px] text-stone-600 text-left border border-stone-200/60 space-y-1">
         <div class="flex items-center gap-1.5 font-medium text-stone-800">
-          <span>💡</span> วิธีติดตั้งบน iPhone/iPad:
+          <span>💡</span> วิธีติดตั้งลงหน้าจอ:
         </div>
-        <p>1. กดปุ่มแชร์ <b>Share (ไอคอนสี่เหลี่ยมลูกศรชี้ขึ้น)</b> ที่แถบเมนู Safari</p>
-        <p>2. เลื่อนลงแล้วเลือก <b>"เพิ่มไปยังหน้าจอโฮม (Add to Home Screen)"</b></p>
+        <p id="browserInstructionText">กดปุ่ม <b>จุด 3 จุด (⋮)</b> ด้านบนขวาของ Chrome แล้วเลือก <b>"ติดตั้งแอป"</b> หรือ <b>"เพิ่มลงในหน้าจอหลัก"</b></p>
       </div>
 
       <div class="flex gap-2 pt-1">
@@ -271,7 +256,6 @@
   </div>
 
   <script>
-    // State จัดการข้อมูล (Clean Empty State)
     let currentMode = localStorage.getItem('mode_v2') || 'digital';
     let records = JSON.parse(localStorage.getItem('rec_v2')) || [];
     let oilCurrentKm = parseFloat(localStorage.getItem('oil_km_v2')) || 0.0;
@@ -280,7 +264,6 @@
 
     let deferredPrompt = null;
 
-    // Helper Functions
     function getTodayString() {
       const d = new Date();
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -303,7 +286,6 @@
       }, 1800);
     }
 
-    // Toggle Modes
     function toggleMode() {
       currentMode = currentMode === 'digital' ? 'analog' : 'digital';
       localStorage.setItem('mode_v2', currentMode);
@@ -327,7 +309,6 @@
       }
     }
 
-    // Tab Navigation
     function switchTab(tab) {
       const pageRecord = document.getElementById('pageRecord');
       const pageHistory = document.getElementById('pageHistory');
@@ -348,7 +329,6 @@
       renderUI();
     }
 
-    // การบันทึกโหมดดิจิทัล
     function saveDigitalDistance() {
       const input = document.getElementById('digitalKmInput');
       const val = parseFloat(input.value);
@@ -362,13 +342,12 @@
       showToast(`บันทึกระยะทาง +${val.toFixed(1)} กม.`);
     }
 
-    // ตั้งค่าเลขไมล์เริ่มต้น (โหมดอนาล็อก) - ไม่แสดงเลข 0
     function setBaseOdoPrompt() {
       openInputModal(
         '⚙️',
         'ตั้งเลขไมล์เริ่มต้น',
         'กรอกเลขไมล์ปัจจุบันบนหน้าปัดรถเพื่อเริ่มนับ (กม.) โดยจะไม่ส่งผลกระทบต่อยอดสะสมน้ำมันเครื่อง',
-        '', // เว้นว่าง ไม่แสดง 0
+        '', 
         'เช่น 12450.5',
         (newVal) => {
           const num = parseFloat(newVal);
@@ -382,7 +361,6 @@
       );
     }
 
-    // การบันทึกโหมดอนาล็อก
     function saveAnalogDistance() {
       const input = document.getElementById('analogCurrentInput');
       const currentOdo = parseFloat(input.value);
@@ -403,7 +381,6 @@
       showToast(`บันทึกสำเร็จ วิ่งเพิ่มไป ${diff.toFixed(1)} กม.`);
     }
 
-    // รวมการบันทึกระยะทาง
     function addDistance(km) {
       const today = getTodayString();
       const existing = records.find(r => r.date === today);
@@ -418,7 +395,6 @@
       renderUI();
     }
 
-    // รีเซ็ตรอบน้ำมันเครื่อง
     function confirmResetOil() {
       openModal(
         '🛢️', 
@@ -434,7 +410,6 @@
       );
     }
 
-    // ตั้งเป้าหมายน้ำมันเครื่อง
     function changeOilTargetPrompt() {
       openInputModal(
         '🎯',
@@ -454,7 +429,6 @@
       );
     }
 
-    // Custom Modal Management
     function openModal(emoji, title, desc, onConfirm, showCancel = true) {
       const modal = document.getElementById('customModal');
       const card = document.getElementById('modalCard');
@@ -511,7 +485,6 @@
       setTimeout(() => modal.classList.add('hidden'), 200);
     }
 
-    // จัดการแก้ไข/ลบประวัติ
     function editRecord(date) {
       const item = records.find(r => r.date === date);
       if (!item) return;
@@ -548,7 +521,6 @@
       );
     }
 
-    // ฟังก์ชันวาด UI
     function renderUI() {
       document.getElementById('todayBadge').textContent = formatThaiDate(getTodayString());
       document.getElementById('displayLastOdo').textContent = lastOdo.toFixed(1);
@@ -611,23 +583,16 @@
       });
     }
 
-    // รองรับปุ่ม Enter บนแป้นพิมพ์
     document.getElementById('digitalKmInput').addEventListener('keydown', (e) => { 
-      if (e.key === 'Enter') { 
-        e.preventDefault(); 
-        saveDigitalDistance(); 
-      } 
+      if (e.key === 'Enter') { e.preventDefault(); saveDigitalDistance(); } 
     });
     
     document.getElementById('analogCurrentInput').addEventListener('keydown', (e) => { 
-      if (e.key === 'Enter') { 
-        e.preventDefault(); 
-        saveAnalogDistance(); 
-      } 
+      if (e.key === 'Enter') { e.preventDefault(); saveAnalogDistance(); } 
     });
 
     // -------------------------------------------------------------
-    // PWA Check & Install Prompt Logic (ระบบตรวจจับและป๊อปอัปติดตั้ง)
+    // ปรับปรุงระบบตรวจจับและบังคับแสดงป๊อปอัปติดตั้ง
     // -------------------------------------------------------------
     function isAppAlreadyInstalled() {
       return (
@@ -637,38 +602,43 @@
       );
     }
 
-    function checkAndShowInstallPrompt() {
-      // หากติดตั้งไว้แล้ว หรือเคยปิดป๊อปอัปในรอบเปิดเว็บนี้ไปแล้ว จะไม่เด้งซ้ำ
-      if (isAppAlreadyInstalled() || sessionStorage.getItem('pwa_prompt_dismissed')) {
-        return;
-      }
+    function showInstallModal() {
+      if (isAppAlreadyInstalled()) return;
 
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
       const modal = document.getElementById('pwaInstallModal');
       const card = document.getElementById('pwaInstallCard');
       const btnDoInstall = document.getElementById('btnDoInstall');
-      const iosInstruction = document.getElementById('iosInstruction');
+      const instructionBox = document.getElementById('browserInstruction');
+      const instructionText = document.getElementById('browserInstructionText');
 
-      if (isIOS) {
-        // บน iOS Safari แนะนำปุ่ม Share
-        iosInstruction.classList.remove('hidden');
-        btnDoInstall.classList.add('hidden');
-      } else {
-        iosInstruction.classList.add('hidden');
+      if (deferredPrompt) {
+        // เบราว์เซอร์รองรับการกดติดตั้งตรงๆ
         btnDoInstall.classList.remove('hidden');
+        instructionBox.classList.add('hidden');
+      } else {
+        // หากเบราว์เซอร์ยังไม่ปล่อย prompt จะแสดงคู่มือแนะนำการกดแทนทันที
+        btnDoInstall.classList.add('hidden');
+        instructionBox.classList.remove('hidden');
+        if (isIOS) {
+          instructionText.innerHTML = 'กดปุ่ม <b>แชร์ (Share)</b> ที่แถบเมนู Safari แล้วเลือก <b>"เพิ่มไปยังหน้าจอโฮม (Add to Home Screen)"</b>';
+        } else {
+          instructionText.innerHTML = 'กดปุ่ม <b>จุด 3 จุด (⋮)</b> บนเบราว์เซอร์ แล้วเลือก <b>"ติดตั้งแอป"</b> หรือ <b>"เพิ่มลงในหน้าจอหลัก"</b>';
+        }
       }
 
       modal.classList.remove('hidden');
       setTimeout(() => {
         modal.classList.remove('opacity-0');
         card.classList.remove('scale-95');
-      }, 500);
+      }, 50);
     }
 
+    // ดักจับเมื่อเบราว์เซอร์พร้อมติดตั้ง
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       deferredPrompt = e;
-      checkAndShowInstallPrompt();
+      showInstallModal();
     });
 
     function triggerPWAInstall() {
@@ -687,7 +657,6 @@
     }
 
     function dismissInstallPrompt() {
-      sessionStorage.setItem('pwa_prompt_dismissed', 'true');
       const modal = document.getElementById('pwaInstallModal');
       const card = document.getElementById('pwaInstallCard');
       modal.classList.add('opacity-0');
@@ -695,12 +664,15 @@
       setTimeout(() => modal.classList.add('hidden'), 200);
     }
 
-    // เริ่มต้นระบบเมื่อเปิดหน้าเว็บ
     window.addEventListener('DOMContentLoaded', () => {
       applyModeUI();
       renderUI();
-      // หน่วงเวลาตรวจสอบป๊อปอัปติดตั้งเล็กน้อยเพื่อให้หน้าเว็บโหลดเรียบร้อยก่อน
-      setTimeout(checkAndShowInstallPrompt, 1200);
+      // บังคับตรวจสอบและเปิดป๊อปอัปหลังจากเปิดหน้าเว็บ 1.2 วินาทีเสมอ หากยังไม่ได้ติดตั้งลงเครื่อง
+      setTimeout(() => {
+        if (!isAppAlreadyInstalled()) {
+          showInstallModal();
+        }
+      }, 1200);
     });
   </script>
 </body>
