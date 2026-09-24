@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#FAF9F6">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Trip Tracker">
+  <title>บันทึกระยะทาง & น้ำมันเครื่อง</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Google Fonts: Prompt & Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    body {
+      font-family: 'Prompt', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: #FAF9F6;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .num-font { 
+      font-family: 'Plus Jakarta Sans', sans-serif; 
+    }
+    .korean-card {
+      background: #FFFFFF;
+      border: 1px solid #F1EFEA;
+      box-shadow: 0 10px 30px -10px rgba(180, 175, 165, 0.15);
+    }
+    .korean-oil-card {
+      background: linear-gradient(135deg, #FFFBF5 0%, #FFF5EB 50%, #FFF9F2 100%);
+      border: 1px solid #FFE8D6;
+      box-shadow: 0 10px 28px -10px rgba(235, 140, 70, 0.15);
+    }
+    input[type=number]::-webkit-inner-spin-button, 
+    input[type=number]::-webkit-outer-spin-button { 
+      -webkit-appearance: none; 
+      margin: 0; 
+    }
+    input[type=number] {
+      -moz-appearance: textfield;
+    }
+    .safe-bottom {
+      padding-bottom: max(1.25rem, env(safe-area-inset-bottom));
+    }
+  </style>
+</head>
+<body class="text-stone-700 min-h-screen flex flex-col justify-between select-none antialiased">
+
+  <!-- Toast Notification แจ้งเตือนสไตล์เกาหลี -->
+  <div id="toast" class="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-stone-800/85 backdrop-blur-md text-stone-50 px-4 py-2.5 rounded-full text-xs font-medium shadow-xl transition-all duration-300 opacity-0 pointer-events-none -translate-y-3 flex items-center gap-2">
+    <span id="toastIcon" class="text-sm">✨</span>
+    <span id="toastMsg">บันทึกสำเร็จ</span>
+  </div>
+
+  <!-- เนื้อหาหลัก -->
+  <main class="w-full max-w-md mx-auto p-4 pb-28 space-y-4 flex-1">
+    
+    <!-- Top Bar / Header -->
+    <header class="flex items-center justify-between pt-1.5 px-0.5">
+      <div>
+        <div class="flex items-center gap-1.5">
+          <span class="text-xl">🛵</span>
+          <h1 class="text-base font-semibold text-stone-800 tracking-tight">บันทึกระยะทาง</h1>
+        </div>
+        <div id="todayBadge" class="text-[11px] text-stone-400 font-normal pl-0.5 mt-0.5">--/--/--</div>
+      </div>
+      
+      <!-- ปุ่มสลับโหมด -->
+      <button onclick="toggleMode()" class="bg-white border border-stone-200/80 hover:border-violet-300 active:scale-95 text-stone-600 px-3 py-1.5 rounded-full text-xs font-medium shadow-sm transition-all flex items-center gap-1.5">
+        <span class="text-amber-500">⚡</span>
+        <span id="modeLabelText" class="text-stone-700 font-medium">โหมด: ไมล์ดิจิทัล</span>
+      </button>
+    </header>
+
+    <!-- Page 1: หน้าบันทึกหลัก -->
+    <div id="pageRecord" class="space-y-4">
+      
+      <!-- การ์ดน้ำมันเครื่อง (Oil Change Tracker) สไตล์พาสเทล -->
+      <section class="korean-oil-card rounded-3xl p-4 relative overflow-hidden">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-2xl bg-amber-100/70 text-amber-700 flex items-center justify-center text-lg shadow-sm">
+              🛢️
+            </div>
+            <div>
+              <span class="text-[10px] font-semibold tracking-wider text-amber-600/80 uppercase block">Oil Change Tracker</span>
+              <span class="text-xs font-medium text-stone-800">รอบถ่ายน้ำมันเครื่อง</span>
+            </div>
+          </div>
+          <button onclick="confirmResetOil()" class="text-[11px] bg-white text-rose-500 border border-rose-200/60 hover:bg-rose-50 active:scale-95 px-3 py-1 rounded-full font-medium transition-all shadow-xs">
+            รีเซ็ตทริป
+          </button>
+        </div>
+
+        <div class="flex items-baseline justify-between mt-2 px-1">
+          <div class="flex items-baseline gap-1.5">
+            <span id="oilCurrentKm" class="num-font text-3xl font-extrabold text-amber-700">0.0</span>
+            <span class="text-xs text-stone-400 font-normal">/ <span id="oilTargetKm" class="num-font font-semibold text-stone-600">2000</span> กม.</span>
+          </div>
+          <button onclick="changeOilTargetPrompt()" class="text-[11px] text-amber-700/80 hover:text-amber-800 underline font-medium">
+            ตั้งเป้าหมาย
+          </button>
+        </div>
+
+        <!-- Progress Bar นุ่มนวล -->
+        <div class="w-full bg-amber-200/40 rounded-full h-2.5 mt-3 overflow-hidden p-0.5">
+          <div id="oilProgressBar" class="bg-gradient-to-r from-amber-400 via-orange-400 to-rose-400 h-full rounded-full transition-all duration-500 shadow-xs" style="width: 0%;"></div>
+        </div>
+
+        <div class="flex justify-between items-center text-[10px] text-stone-400 mt-2 px-1">
+          <span id="oilPercentText">สะสมแล้ว 0%</span>
+          <span id="oilRemainingText" class="font-medium text-amber-700/80">เหลืออีก 2000 กม.</span>
+        </div>
+      </section>
+
+      <!-- กล่องโหมดดิจิทัล -->
+      <section id="boxDigital" class="korean-card rounded-3xl p-5 space-y-3.5">
+        <div class="flex justify-between items-center">
+          <div>
+            <span class="text-[10px] font-semibold text-violet-500 tracking-wider uppercase block">Digital Trip Mode</span>
+            <h2 class="text-xs font-medium text-stone-800">กรอกระยะทางที่วิ่งได้</h2>
+          </div>
+          <span class="text-[10px] bg-violet-50 text-violet-600 px-2 py-0.5 rounded-full font-normal">กด Enter ได้ทันที</span>
+        </div>
+
+        <div class="relative">
+          <input id="digitalKmInput" type="number" step="0.1" inputmode="decimal" placeholder="0.0" 
+            class="num-font w-full bg-stone-50/70 border border-stone-200/80 text-3xl font-bold text-center text-stone-800 py-3.5 rounded-2xl focus:outline-none focus:ring-2 focus:ring-violet-300/60 focus:bg-white focus:border-violet-200 transition-all placeholder:text-stone-300">
+          <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-medium text-stone-400">กม.</span>
+        </div>
+
+        <button onclick="saveDigitalDistance()" class="w-full bg-gradient-to-r from-violet-500 to-purple-500 hover:opacity-95 active:scale-[0.98] text-white font-medium py-3 rounded-2xl shadow-sm shadow-violet-200 transition-all text-xs">
+          บันทึกระยะทาง (Enter)
+        </button>
+      </section>
+
+      <!-- กล่องโหมดอนาล็อก (ตัดแถบแสดงผลต่างออกเรียบร้อย) -->
+      <section id="boxAnalog" class="korean-card rounded-3xl p-5 space-y-3.5 hidden">
+        <div class="flex justify-between items-center">
+          <div>
+            <span class="text-[10px] font-semibold text-rose-400 tracking-wider uppercase block">Analog ODO Mode</span>
+            <h2 class="text-xs font-medium text-stone-800">คำนวณไมล์หน้าปัดจริง</h2>
+          </div>
+          <button onclick="setBaseOdoPrompt()" class="text-violet-600 hover:text-violet-700 bg-violet-50 hover:bg-violet-100/70 px-2.5 py-1 rounded-xl text-[11px] font-medium transition-all">
+            ⚙️ เลขตั้งต้น
+          </button>
+        </div>
+
+        <!-- กล่องแสดงเลขไมล์ตั้งต้นก่อนหน้า -->
+        <div class="bg-stone-50 border border-stone-200/60 rounded-2xl p-3 flex justify-between items-center">
+          <div>
+            <span class="text-[11px] text-stone-500 block font-normal">เลขไมล์ก่อนหน้า (ตั้งต้น)</span>
+            <span class="text-[9px] text-stone-400">*ไม่รวมสะสมในรอบน้ำมัน</span>
+          </div>
+          <div class="flex items-baseline gap-1">
+            <span id="displayLastOdo" class="num-font text-base font-bold text-stone-700">0.0</span>
+            <span class="text-[10px] text-stone-400">กม.</span>
+          </div>
+        </div>
+
+        <!-- ช่องกรอกเลขไมล์ปัจจุบัน -->
+        <div>
+          <label class="block text-[11px] font-normal text-stone-500 mb-1.5">กรอกเลขไมล์ปัจจุบันบนหน้าปัดรถ</label>
+          <div class="relative">
+            <input id="analogCurrentInput" type="number" step="0.1" inputmode="decimal" placeholder="00000.0" 
+              class="num-font w-full bg-stone-50/70 border border-stone-200/80 text-3xl font-bold text-center text-stone-800 py-3.5 rounded-2xl focus:outline-none focus:ring-2 focus:ring-rose-300/60 focus:bg-white focus:border-rose-200 transition-all placeholder:text-stone-300">
+            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-medium text-stone-400">กม.</span>
+          </div>
+        </div>
+
+        <!-- ปุ่มคำนวณและบันทึกค่า -->
+        <button onclick="saveAnalogDistance()" class="w-full bg-gradient-to-r from-rose-400 to-violet-500 hover:opacity-95 active:scale-[0.98] text-white font-medium py-3 rounded-2xl shadow-sm shadow-rose-200 transition-all text-xs">
+          คำนวณและบันทึกค่า (Enter)
+        </button>
+      </section>
+
+      <!-- แถบสรุปยอดสะสมวันนี้ -->
+      <div class="korean-card rounded-2xl p-3.5 px-4 flex items-center justify-between">
+        <div>
+          <span class="text-[11px] text-stone-400 block font-normal">วิ่งสะสมเฉพาะวันนี้</span>
+          <div class="flex items-baseline gap-1 mt-0.5">
+            <span id="todayTotalSummary" class="num-font text-2xl font-bold text-emerald-600">0.0</span>
+            <span class="text-[10px] text-stone-400">กม.</span>
+          </div>
+        </div>
+        <button onclick="switchTab('history')" class="text-xs text-stone-600 font-medium bg-stone-100 hover:bg-stone-200/70 px-3.5 py-2 rounded-xl flex items-center gap-1.5 active:scale-95 transition-all">
+          <span>ดูประวัติ</span>
+          <span class="text-stone-400">→</span>
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Page 2: หน้าประวัติรายวัน -->
+    <div id="pageHistory" class="space-y-3.5 hidden">
+      <div class="flex items-center justify-between px-1">
+        <h2 class="text-xs font-semibold text-stone-800 tracking-tight">ประวัติบันทึกรายวัน</h2>
+        <span id="historyDaysBadge" class="text-[10px] bg-stone-100 text-stone-500 px-2.5 py-0.5 rounded-full font-medium">0 วัน</span>
+      </div>
+      
+      <!-- รายการประวัติ -->
+      <div id="historyListContainer" class="space-y-2.5">
+        <!-- แสดงผ่าน JS -->
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Bottom Navigation บาร์นำทางด้านล่างสไตล์เกาหลี -->
+  <nav class="fixed bottom-3 left-4 right-4 max-w-md mx-auto bg-white/85 backdrop-blur-xl border border-stone-200/60 rounded-3xl p-1.5 flex justify-around items-center shadow-lg shadow-stone-200/50 z-30">
+    <button id="navRecord" onclick="switchTab('record')" class="flex-1 py-1.5 rounded-2xl flex flex-col items-center justify-center text-violet-600 bg-violet-50/70 transition-all">
+      <span class="text-base">🛵</span>
+      <span class="text-[10px] font-medium mt-0.5">หน้าบันทึก</span>
+    </button>
+    <button id="navHistory" onclick="switchTab('history')" class="flex-1 py-1.5 rounded-2xl flex flex-col items-center justify-center text-stone-400 hover:text-stone-600 transition-all">
+      <span class="text-base">🗓️</span>
+      <span class="text-[10px] font-medium mt-0.5">ประวัติ</span>
+    </button>
+  </nav>
+
+  <!-- Custom Pop-up Modal (ป๊อปอัปแจ้งเตือนและแก้ไขข้อมูล) -->
+  <div id="customModal" class="fixed inset-0 bg-stone-900/30 backdrop-blur-xs z-50 flex items-center justify-center p-5 hidden opacity-0 transition-opacity duration-200">
+    <div class="bg-white w-full max-w-xs rounded-3xl p-5 space-y-3.5 korean-card text-center transform transition-all duration-200 scale-95" id="modalCard">
+      <div id="modalEmoji" class="text-3xl">✨</div>
+      <h3 id="modalTitle" class="text-xs font-semibold text-stone-800">ยืนยันรายการ</h3>
+      <p id="modalDesc" class="text-[11px] text-stone-500 leading-relaxed font-normal">ข้อความรายละเอียด</p>
+      
+      <div id="modalInputWrap" class="hidden">
+        <input id="modalInput" type="number" step="0.1" inputmode="decimal" class="num-font w-full bg-stone-50 border border-stone-200 text-center text-xl font-bold py-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-300">
+      </div>
+
+      <div class="flex gap-2 pt-1">
+        <button onclick="closeModal()" class="flex-1 bg-stone-100 hover:bg-stone-200 text-stone-600 text-xs font-medium py-2 rounded-xl transition-all">ยกเลิก</button>
+        <button id="modalConfirmBtn" class="flex-1 bg-stone-800 text-white text-xs font-medium py-2 rounded-xl transition-all hover:bg-stone-900">ยืนยัน</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PWA Install Prompt Pop-up (ป๊อปอัปชวนติดตั้งลงหน้าจอเมื่อยังไม่ได้ติดตั้ง) -->
+  <div id="pwaInstallModal" class="fixed inset-0 bg-stone-900/30 backdrop-blur-xs z-50 flex items-center justify-center p-5 hidden opacity-0 transition-opacity duration-200">
+    <div class="bg-white w-full max-w-xs rounded-3xl p-5 space-y-3.5 korean-card text-center transform transition-all duration-200 scale-95" id="pwaInstallCard">
+      <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-500 mx-auto flex items-center justify-center text-2xl shadow-inner">
+        📲
+      </div>
+      <div>
+        <h3 class="text-xs font-semibold text-stone-800">ติดตั้งแอปเพื่อใช้งานสะดวกขึ้น</h3>
+        <p class="text-[11px] text-stone-500 mt-1 leading-relaxed">
+          ติดตั้งลงบนหน้าจอมือถือของคุณ เปิดบันทึกระยะทางได้ทันใจเสมือนแอปจริง
+        </p>
+      </div>
+
+      <!-- คำแนะนำสำหรับ iOS Safari -->
+      <div id="iosInstruction" class="hidden bg-stone-50 p-2.5 rounded-2xl text-[10px] text-stone-600 text-left border border-stone-200/60 space-y-1">
+        <div class="flex items-center gap-1.5 font-medium text-stone-800">
+          <span>💡</span> วิธีติดตั้งบน iPhone/iPad:
+        </div>
+        <p>1. กดปุ่มแชร์ <b>Share (ไอคอนสี่เหลี่ยมลูกศรชี้ขึ้น)</b> ที่แถบเมนู Safari</p>
+        <p>2. เลื่อนลงแล้วเลือก <b>"เพิ่มไปยังหน้าจอโฮม (Add to Home Screen)"</b></p>
+      </div>
+
+      <div class="flex gap-2 pt-1">
+        <button onclick="dismissInstallPrompt()" class="flex-1 bg-stone-100 hover:bg-stone-200 text-stone-600 text-xs font-medium py-2 rounded-xl transition-all">ไว้คราวหน้า</button>
+        <button id="btnDoInstall" onclick="triggerPWAInstall()" class="flex-1 bg-gradient-to-r from-violet-500 to-purple-500 text-white text-xs font-medium py-2 rounded-xl transition-all hover:opacity-95 shadow-sm shadow-violet-200">ติดตั้งทันที</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // State จัดการข้อมูล (Clean Empty State)
+    let currentMode = localStorage.getItem('mode_v2') || 'digital';
+    let records = JSON.parse(localStorage.getItem('rec_v2')) || [];
+    let oilCurrentKm = parseFloat(localStorage.getItem('oil_km_v2')) || 0.0;
+    let oilTargetKm = parseFloat(localStorage.getItem('oil_tar_v2')) || 2000;
+    let lastOdo = parseFloat(localStorage.getItem('odo_v2')) || 0.0;
+
+    let deferredPrompt = null;
+
+    // Helper Functions
+    function getTodayString() {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+
+    function formatThaiDate(dateStr) {
+      if (!dateStr) return '';
+      const [y, m, d] = dateStr.split('-');
+      const months = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+      return `${parseInt(d)} ${months[parseInt(m) - 1]} ${(parseInt(y) + 543).toString().slice(-2)}`;
+    }
+
+    function showToast(msg, icon = '✨') {
+      const toast = document.getElementById('toast');
+      document.getElementById('toastMsg').textContent = msg;
+      document.getElementById('toastIcon').textContent = icon;
+      toast.classList.remove('opacity-0', 'pointer-events-none', '-translate-y-3');
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'pointer-events-none', '-translate-y-3');
+      }, 1800);
+    }
+
+    // Toggle Modes
+    function toggleMode() {
+      currentMode = currentMode === 'digital' ? 'analog' : 'digital';
+      localStorage.setItem('mode_v2', currentMode);
+      applyModeUI();
+      showToast(`สลับเป็นโหมด: ${currentMode === 'digital' ? 'ไมล์ดิจิทัล' : 'ไมล์อนาล็อก'}`);
+    }
+
+    function applyModeUI() {
+      const label = document.getElementById('modeLabelText');
+      const boxDigital = document.getElementById('boxDigital');
+      const boxAnalog = document.getElementById('boxAnalog');
+
+      if (currentMode === 'digital') {
+        label.textContent = 'โหมด: ไมล์ดิจิทัล';
+        boxDigital.classList.remove('hidden');
+        boxAnalog.classList.add('hidden');
+      } else {
+        label.textContent = 'โหมด: ไมล์อนาล็อก';
+        boxDigital.classList.add('hidden');
+        boxAnalog.classList.remove('hidden');
+      }
+    }
+
+    // Tab Navigation
+    function switchTab(tab) {
+      const pageRecord = document.getElementById('pageRecord');
+      const pageHistory = document.getElementById('pageHistory');
+      const navRecord = document.getElementById('navRecord');
+      const navHistory = document.getElementById('navHistory');
+
+      if (tab === 'record') {
+        pageRecord.classList.remove('hidden');
+        pageHistory.classList.add('hidden');
+        navRecord.className = 'flex-1 py-1.5 rounded-2xl flex flex-col items-center justify-center text-violet-600 bg-violet-50/70 transition-all';
+        navHistory.className = 'flex-1 py-1.5 rounded-2xl flex flex-col items-center justify-center text-stone-400 hover:text-stone-600 transition-all';
+      } else {
+        pageRecord.classList.add('hidden');
+        pageHistory.classList.remove('hidden');
+        navRecord.className = 'flex-1 py-1.5 rounded-2xl flex flex-col items-center justify-center text-stone-400 hover:text-stone-600 transition-all';
+        navHistory.className = 'flex-1 py-1.5 rounded-2xl flex flex-col items-center justify-center text-violet-600 bg-violet-50/70 transition-all';
+      }
+      renderUI();
+    }
+
+    // การบันทึกโหมดดิจิทัล
+    function saveDigitalDistance() {
+      const input = document.getElementById('digitalKmInput');
+      const val = parseFloat(input.value);
+      if (isNaN(val) || val <= 0) {
+        showToast('กรุณากรอกระยะทาง', '⚠️');
+        input.focus();
+        return;
+      }
+      addDistance(val);
+      input.value = '';
+      showToast(`บันทึกระยะทาง +${val.toFixed(1)} กม.`);
+    }
+
+    // ตั้งค่าเลขไมล์เริ่มต้น (โหมดอนาล็อก) - ไม่แสดงเลข 0
+    function setBaseOdoPrompt() {
+      openInputModal(
+        '⚙️',
+        'ตั้งเลขไมล์เริ่มต้น',
+        'กรอกเลขไมล์ปัจจุบันบนหน้าปัดรถเพื่อเริ่มนับ (กม.) โดยจะไม่ส่งผลกระทบต่อยอดสะสมน้ำมันเครื่อง',
+        '', // เว้นว่าง ไม่แสดง 0
+        'เช่น 12450.5',
+        (newVal) => {
+          const num = parseFloat(newVal);
+          if (!isNaN(num) && num >= 0) {
+            lastOdo = parseFloat(num.toFixed(1));
+            localStorage.setItem('odo_v2', lastOdo);
+            renderUI();
+            showToast(`ตั้งเลขเริ่มต้นเป็น ${lastOdo.toFixed(1)} กม.`);
+          }
+        }
+      );
+    }
+
+    // การบันทึกโหมดอนาล็อก
+    function saveAnalogDistance() {
+      const input = document.getElementById('analogCurrentInput');
+      const currentOdo = parseFloat(input.value);
+      if (isNaN(currentOdo)) {
+        showToast('กรุณากรอกเลขไมล์ปัจจุบัน', '⚠️');
+        input.focus();
+        return;
+      }
+      if (currentOdo < lastOdo) {
+        openModal('⚠️', 'เลขไมล์ไม่ถูกต้อง', `เลขไมล์ปัจจุบัน (${currentOdo.toFixed(1)}) ต้องมากกว่าหรือเท่ากับเลขไมล์ก่อนหน้า (${lastOdo.toFixed(1)})`, null, false);
+        return;
+      }
+      const diff = parseFloat((currentOdo - lastOdo).toFixed(1));
+      addDistance(diff);
+      lastOdo = currentOdo;
+      localStorage.setItem('odo_v2', lastOdo);
+      input.value = '';
+      showToast(`บันทึกสำเร็จ วิ่งเพิ่มไป ${diff.toFixed(1)} กม.`);
+    }
+
+    // รวมการบันทึกระยะทาง
+    function addDistance(km) {
+      const today = getTodayString();
+      const existing = records.find(r => r.date === today);
+      if (existing) {
+        existing.km = parseFloat((existing.km + km).toFixed(1));
+      } else {
+        records.push({ date: today, km: parseFloat(km.toFixed(1)) });
+      }
+      oilCurrentKm = parseFloat((oilCurrentKm + km).toFixed(1));
+      localStorage.setItem('rec_v2', JSON.stringify(records));
+      localStorage.setItem('oil_km_v2', oilCurrentKm);
+      renderUI();
+    }
+
+    // รีเซ็ตรอบน้ำมันเครื่อง
+    function confirmResetOil() {
+      openModal(
+        '🛢️', 
+        'รีเซ็ตรอบน้ำมันเครื่อง?', 
+        `วิ่งสะสมรอบนี้แล้ว ${oilCurrentKm.toFixed(1)} กม. ต้องการรีเซ็ตค่าเป็น 0 หรือไม่?`, 
+        () => {
+          oilCurrentKm = 0.0;
+          localStorage.setItem('oil_km_v2', 0);
+          renderUI();
+          closeModal();
+          showToast('รีเซ็ตรอบน้ำมันเครื่องแล้ว', '🔄');
+        }
+      );
+    }
+
+    // ตั้งเป้าหมายน้ำมันเครื่อง
+    function changeOilTargetPrompt() {
+      openInputModal(
+        '🎯',
+        'กำหนดรอบน้ำมันเครื่อง',
+        'กำหนดระยะทางเป้าหมายสำหรับเปลี่ยนถ่ายน้ำมันเครื่อง (กม.)',
+        oilTargetKm,
+        'เช่น 2000',
+        (newVal) => {
+          const num = parseFloat(newVal);
+          if (!isNaN(num) && num > 0) {
+            oilTargetKm = num;
+            localStorage.setItem('oil_tar_v2', oilTargetKm);
+            renderUI();
+            showToast(`ตั้งเป้าหมายเป็น ${oilTargetKm} กม.`);
+          }
+        }
+      );
+    }
+
+    // Custom Modal Management
+    function openModal(emoji, title, desc, onConfirm, showCancel = true) {
+      const modal = document.getElementById('customModal');
+      const card = document.getElementById('modalCard');
+      document.getElementById('modalEmoji').textContent = emoji;
+      document.getElementById('modalTitle').textContent = title;
+      document.getElementById('modalDesc').textContent = desc;
+      document.getElementById('modalInputWrap').classList.add('hidden');
+      
+      const confirmBtn = document.getElementById('modalConfirmBtn');
+      confirmBtn.onclick = onConfirm || closeModal;
+      confirmBtn.className = 'flex-1 bg-stone-800 text-white text-xs font-medium py-2 rounded-xl transition-all hover:bg-stone-900';
+
+      modal.classList.remove('hidden');
+      setTimeout(() => {
+        modal.classList.remove('opacity-0');
+        card.classList.remove('scale-95');
+      }, 10);
+    }
+
+    function openInputModal(emoji, title, desc, defaultVal, placeholder, onSave) {
+      const modal = document.getElementById('customModal');
+      const card = document.getElementById('modalCard');
+      const inputWrap = document.getElementById('modalInputWrap');
+      const input = document.getElementById('modalInput');
+      
+      document.getElementById('modalEmoji').textContent = emoji;
+      document.getElementById('modalTitle').textContent = title;
+      document.getElementById('modalDesc').textContent = desc;
+      
+      inputWrap.classList.remove('hidden');
+      input.value = (defaultVal !== undefined && defaultVal !== null && defaultVal !== '') ? defaultVal : '';
+      input.placeholder = placeholder || '';
+
+      const confirmBtn = document.getElementById('modalConfirmBtn');
+      confirmBtn.className = 'flex-1 bg-violet-600 text-white text-xs font-medium py-2 rounded-xl transition-all hover:bg-violet-700';
+      confirmBtn.onclick = () => {
+        onSave(input.value);
+        closeModal();
+      };
+
+      modal.classList.remove('hidden');
+      setTimeout(() => {
+        modal.classList.remove('opacity-0');
+        card.classList.remove('scale-95');
+        input.focus();
+      }, 10);
+    }
+
+    function closeModal() {
+      const modal = document.getElementById('customModal');
+      const card = document.getElementById('modalCard');
+      modal.classList.add('opacity-0');
+      card.classList.add('scale-95');
+      setTimeout(() => modal.classList.add('hidden'), 200);
+    }
+
+    // จัดการแก้ไข/ลบประวัติ
+    function editRecord(date) {
+      const item = records.find(r => r.date === date);
+      if (!item) return;
+      openInputModal(
+        '✏️',
+        'แก้ไขระยะทาง',
+        `ระบุระยะทางวันที่ ${formatThaiDate(date)} (กม.)`,
+        item.km,
+        '0.0',
+        (newVal) => {
+          const num = parseFloat(newVal);
+          if (!isNaN(num) && num >= 0) {
+            item.km = parseFloat(num.toFixed(1));
+            localStorage.setItem('rec_v2', JSON.stringify(records));
+            renderUI();
+            showToast('แก้ไขข้อมูลเรียบร้อย');
+          }
+        }
+      );
+    }
+
+    function deleteRecord(date) {
+      openModal(
+        '🗑️', 
+        'ลบข้อมูลประวัติ?', 
+        `ต้องการลบข้อมูลของวันที่ ${formatThaiDate(date)} หรือไม่?`, 
+        () => {
+          records = records.filter(r => r.date !== date);
+          localStorage.setItem('rec_v2', JSON.stringify(records));
+          renderUI();
+          closeModal();
+          showToast('ลบรายการเรียบร้อย');
+        }
+      );
+    }
+
+    // ฟังก์ชันวาด UI
+    function renderUI() {
+      document.getElementById('todayBadge').textContent = formatThaiDate(getTodayString());
+      document.getElementById('displayLastOdo').textContent = lastOdo.toFixed(1);
+      document.getElementById('oilCurrentKm').textContent = oilCurrentKm.toFixed(1);
+      document.getElementById('oilTargetKm').textContent = oilTargetKm;
+      
+      const percent = Math.min(100, Math.round((oilCurrentKm / oilTargetKm) * 100));
+      document.getElementById('oilProgressBar').style.width = `${percent}%`;
+      document.getElementById('oilPercentText').textContent = `สะสมแล้ว ${percent}%`;
+      
+      const remaining = Math.max(0, parseFloat((oilTargetKm - oilCurrentKm).toFixed(1)));
+      const remEl = document.getElementById('oilRemainingText');
+      if (oilCurrentKm >= oilTargetKm) {
+        remEl.textContent = '⚠️ ถึงรอบถ่ายน้ำมันแล้ว!';
+        remEl.className = 'font-semibold text-rose-500';
+      } else {
+        remEl.textContent = `เหลืออีก ${remaining.toFixed(1)} กม.`;
+        remEl.className = 'font-medium text-amber-700/80';
+      }
+
+      const todayRecord = records.find(r => r.date === getTodayString());
+      document.getElementById('todayTotalSummary').textContent = todayRecord ? todayRecord.km.toFixed(1) : '0.0';
+      document.getElementById('historyDaysBadge').textContent = `${records.length} วัน`;
+
+      const container = document.getElementById('historyListContainer');
+      container.innerHTML = '';
+
+      if (records.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-12 text-stone-400 text-xs bg-white rounded-3xl border border-dashed border-stone-200">
+            <span class="text-2xl block mb-1">🍃</span>
+            ยังไม่มีประวัติการบันทึก
+          </div>
+        `;
+        return;
+      }
+
+      const sorted = [...records].sort((a, b) => new Date(b.date) - new Date(a.date));
+      sorted.forEach(item => {
+        const isToday = item.date === getTodayString();
+        const card = document.createElement('div');
+        card.className = `p-3.5 px-4 rounded-2xl border flex items-center justify-between bg-white ${isToday ? 'border-violet-200 ring-2 ring-violet-50' : 'border-stone-100'} shadow-sm`;
+        card.innerHTML = `
+          <div>
+            <div class="flex items-center gap-1.5">
+              <span class="text-xs font-medium ${isToday ? 'text-violet-600' : 'text-stone-700'}">${formatThaiDate(item.date)}</span>
+              ${isToday ? '<span class="text-[9px] bg-violet-50 text-violet-500 px-2 py-0.2 rounded-full font-medium">วันนี้</span>' : ''}
+            </div>
+            <div class="flex items-baseline gap-1 mt-0.5">
+              <span class="num-font text-base font-bold text-stone-800">${item.km.toFixed(1)}</span>
+              <span class="text-[10px] text-stone-400">กม.</span>
+            </div>
+          </div>
+          <div class="flex items-center gap-1">
+            <button onclick="editRecord('${item.date}')" class="text-stone-400 hover:text-amber-500 p-1.5 transition-colors">✏️</button>
+            <button onclick="deleteRecord('${item.date}')" class="text-stone-400 hover:text-rose-500 p-1.5 transition-colors">🗑️</button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // รองรับปุ่ม Enter บนแป้นพิมพ์
+    document.getElementById('digitalKmInput').addEventListener('keydown', (e) => { 
+      if (e.key === 'Enter') { 
+        e.preventDefault(); 
+        saveDigitalDistance(); 
+      } 
+    });
+    
+    document.getElementById('analogCurrentInput').addEventListener('keydown', (e) => { 
+      if (e.key === 'Enter') { 
+        e.preventDefault(); 
+        saveAnalogDistance(); 
+      } 
+    });
+
+    // -------------------------------------------------------------
+    // PWA Check & Install Prompt Logic (ระบบตรวจจับและป๊อปอัปติดตั้ง)
+    // -------------------------------------------------------------
+    function isAppAlreadyInstalled() {
+      return (
+        window.matchMedia('(display-mode: standalone)').matches ||
+        window.navigator.standalone === true ||
+        document.referrer.includes('android-app://')
+      );
+    }
+
+    function checkAndShowInstallPrompt() {
+      // หากติดตั้งไว้แล้ว หรือเคยปิดป๊อปอัปในรอบเปิดเว็บนี้ไปแล้ว จะไม่เด้งซ้ำ
+      if (isAppAlreadyInstalled() || sessionStorage.getItem('pwa_prompt_dismissed')) {
+        return;
+      }
+
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+      const modal = document.getElementById('pwaInstallModal');
+      const card = document.getElementById('pwaInstallCard');
+      const btnDoInstall = document.getElementById('btnDoInstall');
+      const iosInstruction = document.getElementById('iosInstruction');
+
+      if (isIOS) {
+        // บน iOS Safari แนะนำปุ่ม Share
+        iosInstruction.classList.remove('hidden');
+        btnDoInstall.classList.add('hidden');
+      } else {
+        iosInstruction.classList.add('hidden');
+        btnDoInstall.classList.remove('hidden');
+      }
+
+      modal.classList.remove('hidden');
+      setTimeout(() => {
+        modal.classList.remove('opacity-0');
+        card.classList.remove('scale-95');
+      }, 500);
+    }
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      checkAndShowInstallPrompt();
+    });
+
+    function triggerPWAInstall() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then((choiceResult) => {
+          if (choiceResult.outcome === 'accepted') {
+            showToast('กำลังติดตั้งแอป...', '📲');
+          }
+          deferredPrompt = null;
+          dismissInstallPrompt();
+        });
+      } else {
+        dismissInstallPrompt();
+      }
+    }
+
+    function dismissInstallPrompt() {
+      sessionStorage.setItem('pwa_prompt_dismissed', 'true');
+      const modal = document.getElementById('pwaInstallModal');
+      const card = document.getElementById('pwaInstallCard');
+      modal.classList.add('opacity-0');
+      card.classList.add('scale-95');
+      setTimeout(() => modal.classList.add('hidden'), 200);
+    }
+
+    // เริ่มต้นระบบเมื่อเปิดหน้าเว็บ
+    window.addEventListener('DOMContentLoaded', () => {
+      applyModeUI();
+      renderUI();
+      // หน่วงเวลาตรวจสอบป๊อปอัปติดตั้งเล็กน้อยเพื่อให้หน้าเว็บโหลดเรียบร้อยก่อน
+      setTimeout(checkAndShowInstallPrompt, 1200);
+    });
+  </script>
+</body>
+</html>
