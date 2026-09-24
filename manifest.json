@@ -1,17 +1,21 @@
 {
-  "name": "บันทึกระยะทาง & น้ำมันเครื่อง",
-  "short_name": "MotoTracker",
-  "description": "แอปบันทึกระยะทางประจำวันและคำนวณรอบเปลี่ยนถ่ายน้ำมันเครื่อง",
+  "name": "บันทึกระยะทาง",
+  "short_name": "Trip Tracker",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#F8F9FD",
-  "theme_color": "#6366F1",
-  "orientation": "portrait",
+  "background_color": "#FAF9F6",
+  "theme_color": "#FAF9F6",
   "icons": [
     {
-      "src": "icon-512.svg",
+      "src": "https://cdn-icons-png.flaticon.com/512/3063/3063823.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3063/3063823.png",
       "sizes": "512x512",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "any maskable"
     }
   ]
