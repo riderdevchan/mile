@@ -1,11 +1,10 @@
-self.addEventListener('install', (e) => {
-  self.skipWaiting();
-});
+const CACHE_NAME = 'rider-odo-v1';
+const ASSETS = ['./', './index.html', './chan.png', './manifest.json'];
 
-self.addEventListener('activate', (e) => {
-  e.waitUntil(clients.claim());
+self.addEventListener('install', (e) => {
+  e.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS)));
 });
 
 self.addEventListener('fetch', (e) => {
-  e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
+  e.respondWith(caches.match(e.request).then((res) => res || fetch(e.request)));
 });
