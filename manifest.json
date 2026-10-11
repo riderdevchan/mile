@@ -1,7 +1,9 @@
 {
   "name": "Rider Mileage Tracker",
-  "short_name": "Rider ODO",
+  "short_name": "ไมล์อนาล็อก",
+  "description": "แอปบันทึกระยะทางและรอบเปลี่ยนถ่ายน้ำมันเครื่อง",
   "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#F9F8FE",
   "theme_color": "#836EF3",
@@ -9,7 +11,13 @@
   "icons": [
     {
       "src": "chan.png",
-      "sizes": "192x192 512x512",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "chan.png",
+      "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
     }
