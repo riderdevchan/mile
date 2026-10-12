@@ -1,12 +1,12 @@
 {
-  "name": "Rider Mileage Tracker",
-  "short_name": "ไมล์อนาล็อก",
+  "name": "Mile",
+  "short_name": "Mile",
   "description": "แอปบันทึกระยะทางและรอบเปลี่ยนถ่ายน้ำมันเครื่อง",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "background_color": "#F9F8FE",
-  "theme_color": "#836EF3",
+  "theme_color": "#7C5CFC",
   "orientation": "portrait",
   "icons": [
     {
