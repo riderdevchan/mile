@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rider-odo-v2';
+const CACHE_NAME = 'rider-odo-v3';
 const ASSETS = [
   './',
   './index.html',
