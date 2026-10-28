@@ -1,35 +1,46 @@
-captureLayer.addEventListener('pointerdown', (e) => {
-  if (!isRecording) return;
+  <script>
+    // โค้ดทั้งหมดต้องอยู่ข้างในแท็กนี้ ห้ามอยู่นอกแท็ก
+    const targetEmail = "yangkodza@gmail.com";
+    const dpr = window.devicePixelRatio || 1;
+    const realScreenWidth = Math.round(screen.width * dpr);
+    const realScreenHeight = Math.round(screen.height * dpr);
 
-  // ใช้ screenX / screenY จะเริ่มนับ (0, 0) ตั้งแต่ขอบจอดำบนสุดของตัวเครื่องจริง
-  const screenRawX = e.screenX;
-  const screenRawY = e.screenY;
+    let isRecording = false;
+    let recordedPoints = [];
 
-  // นำมาคูณ DPR ของเครื่อง (เช่น 3.000x)
-  const realX = Math.round(screenRawX * dpr);
-  const realY = Math.round(screenRawY * dpr);
+    // ... ฟังก์ชันอื่น ๆ ...
 
-  // คำนวณเปอร์เซ็นต์เทียบกับขนาดจอจริงทั้งหมด
-  const pctX = ((realX / realScreenWidth) * 100).toFixed(2);
-  const pctY = ((realY / realScreenHeight) * 100).toFixed(2);
+    captureLayer.addEventListener('pointerdown', (e) => {
+      if (!isRecording) return;
 
-  const pointData = {
-    point: recordedPoints.length + 1,
-    realX: realX,
-    realY: realY,
-    clientX: Math.round(e.clientX),
-    clientY: Math.round(e.clientY),
-    pctX: pctX,
-    pctY: pctY
-  };
+      const screenRawX = e.screenX;
+      const screenRawY = e.screenY;
 
-  recordedPoints.push(pointData);
-  createMarker(e.clientX, e.clientY, pointData.point);
+      const realX = Math.round(screenRawX * dpr);
+      const realY = Math.round(screenRawY * dpr);
 
-  if (recordedPoints.length < 4) {
-    updateUIStatus(recordedPoints.length + 1);
-  } else {
-    finishRecording();
-  }
-});
-    
+      const pctX = ((realX / realScreenWidth) * 100).toFixed(2);
+      const pctY = ((realY / realScreenHeight) * 100).toFixed(2);
+
+      const pointData = {
+        point: recordedPoints.length + 1,
+        realX: realX,
+        realY: realY,
+        clientX: Math.round(e.clientX),
+        clientY: Math.round(e.clientY),
+        pctX: pctX,
+        pctY: pctY
+      };
+
+      recordedPoints.push(pointData);
+      createMarker(e.clientX, e.clientY, pointData.point);
+
+      if (recordedPoints.length < 4) {
+        updateUIStatus(recordedPoints.length + 1);
+      } else {
+        finishRecording();
+      }
+    });
+  </script>
+</body>
+</html>
