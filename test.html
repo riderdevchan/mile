@@ -1,5 +1,96 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Screen Calibrator</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    * { touch-action: manipulation; -webkit-user-select: none; user-select: none; }
+    @keyframes pulse-ring {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+      70% { transform: scale(1); box-shadow: 0 0 0 16px rgba(239, 68, 68, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    }
+    .pulsing { animation: pulse-ring 1.8s infinite; }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center justify-between p-4 overflow-hidden relative font-sans">
+
+  <header class="w-full max-w-md bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-xl backdrop-blur-md z-10">
+    <div class="flex items-center justify-between mb-2">
+      <span class="text-xs font-semibold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+        Auto-Detection
+      </span>
+      <span class="text-xs text-slate-400 font-mono">yangkodza@gmail.com</span>
+    </div>
+    
+    <div class="grid grid-cols-3 gap-2 text-center text-xs">
+      <div class="bg-slate-800/60 p-2 rounded-xl">
+        <div class="text-slate-400">ตัวคูณ (DPR)</div>
+        <div id="statDpr" class="text-emerald-300 font-bold text-sm">--</div>
+      </div>
+      <div class="bg-slate-800/60 p-2 rounded-xl">
+        <div class="text-slate-400">ขนาดจอจริง</div>
+        <div id="statRes" class="text-emerald-300 font-bold text-sm">--</div>
+      </div>
+      <div class="bg-slate-800/60 p-2 rounded-xl">
+        <div class="text-slate-400">สถานะ</div>
+        <div id="statStep" class="text-amber-400 font-bold text-sm">พร้อมเริ่ม</div>
+      </div>
+    </div>
+  </header>
+
+  <main class="text-center my-auto max-w-sm px-4 z-10 pointer-events-none">
+    <div id="instructionCard" class="bg-slate-900/70 border border-slate-800 rounded-2xl p-6 shadow-2xl backdrop-blur-sm">
+      <h2 id="instructionTitle" class="text-lg font-bold text-white mb-2">กดปุ่มลอยเพื่อเริ่มบันทึก</h2>
+      <p id="instructionSub" class="text-sm text-slate-400 leading-relaxed">
+        ระบบจะแปลงค่าพิกัดเป็นพิกเซลหน้าจอจริงอัตโนมัติ เมื่อแตะครบ 4 จุดจะส่งสรุปเข้าอีเมลทันที
+      </p>
+    </div>
+  </main>
+
+  <div id="markerContainer" class="absolute inset-0 pointer-events-none z-20"></div>
+  <div id="captureLayer" class="fixed inset-0 bg-transparent hidden z-30 cursor-crosshair"></div>
+
+  <div class="fixed bottom-6 right-6 z-40">
+    <button id="fabBtn" onclick="toggleRecording()" 
+            class="w-16 h-16 rounded-full bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-slate-950 font-bold shadow-2xl flex flex-col items-center justify-center transition-all duration-300 border-2 border-emerald-300">
+      <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+      </svg>
+      <span id="fabText" class="text-[10px] uppercase font-bold tracking-tighter mt-0.5">เริ่ม</span>
+    </button>
+  </div>
+
+  <div id="resultModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md hidden items-center justify-center p-4 z-50">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-sm shadow-2xl text-left">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-bold text-emerald-400 flex items-center gap-2">
+          <span>✓</span> บันทึกครบ 4 จุดแล้ว
+        </h3>
+        <button onclick="closeModal()" class="text-slate-400 hover:text-white text-xl leading-none">&times;</button>
+      </div>
+
+      <div class="text-xs text-slate-400 mb-2">
+        ส่งถึง: <span class="text-slate-200 font-mono">yangkodza@gmail.com</span>
+      </div>
+
+      <div id="resultList" class="space-y-2 mb-5 font-mono text-xs max-h-56 overflow-y-auto"></div>
+
+      <div class="flex flex-col gap-2">
+        <button onclick="sendViaMailto()" class="w-full py-3 px-4 bg-emerald-500 hover:bg-emerald-400 active:scale-98 rounded-xl text-slate-950 font-bold text-sm shadow-lg transition">
+          ส่งอีเมลทันที (Send Email)
+        </button>
+        <button onclick="copyToClipboard()" class="w-full py-2.5 px-4 bg-slate-800 hover:bg-slate-700 active:scale-98 rounded-xl text-slate-300 text-xs font-semibold transition">
+          คัดลอกข้อมูลทั้งหมด
+        </button>
+      </div>
+    </div>
+  </div>
+
   <script>
-    // โค้ดทั้งหมดต้องอยู่ข้างในแท็กนี้ ห้ามอยู่นอกแท็ก
     const targetEmail = "yangkodza@gmail.com";
     const dpr = window.devicePixelRatio || 1;
     const realScreenWidth = Math.round(screen.width * dpr);
@@ -8,13 +99,64 @@
     let isRecording = false;
     let recordedPoints = [];
 
-    // ... ฟังก์ชันอื่น ๆ ...
+    document.getElementById('statDpr').innerText = dpr.toFixed(3) + 'x';
+    document.getElementById('statRes').innerText = realScreenWidth + '×' + realScreenHeight;
 
-    captureLayer.addEventListener('pointerdown', (e) => {
+    const fabBtn = document.getElementById('fabBtn');
+    const fabText = document.getElementById('fabText');
+    const captureLayer = document.getElementById('captureLayer');
+    const statStep = document.getElementById('statStep');
+    const instructionTitle = document.getElementById('instructionTitle');
+    const instructionSub = document.getElementById('instructionSub');
+    const markerContainer = document.getElementById('markerContainer');
+    const resultModal = document.getElementById('resultModal');
+    const resultList = document.getElementById('resultList');
+
+    function toggleRecording() {
+      if (!isRecording) {
+        startRecording();
+      } else {
+        resetRecording();
+      }
+    }
+
+    function startRecording() {
+      isRecording = true;
+      recordedPoints = [];
+      markerContainer.innerHTML = '';
+      fabBtn.classList.remove('bg-emerald-500', 'border-emerald-300');
+      fabBtn.classList.add('bg-rose-500', 'border-rose-300', 'pulsing');
+      fabText.innerText = "ยกเลิก";
+      captureLayer.classList.remove('hidden');
+      updateUIStatus(1);
+    }
+
+    function resetRecording() {
+      isRecording = false;
+      recordedPoints = [];
+      markerContainer.innerHTML = '';
+      fabBtn.classList.remove('bg-rose-500', 'border-rose-300', 'pulsing');
+      fabBtn.classList.add('bg-emerald-500', 'border-emerald-300');
+      fabText.innerText = "เริ่ม";
+      captureLayer.classList.add('hidden');
+      statStep.innerText = "พร้อมเริ่ม";
+      statStep.className = "text-amber-400 font-bold text-sm";
+      instructionTitle.innerText = "กดปุ่มลอยเพื่อเริ่มบันทึก";
+      instructionSub.innerText = "ระบบจะแปลงค่าพิกัดเป็นพิกเซลหน้าจอจริงอัตโนมัติ";
+    }
+
+    function updateUIStatus(step) {
+      statStep.innerText = 'จุดที่ ' + step + '/4';
+      statStep.className = "text-rose-400 font-bold text-sm";
+      instructionTitle.innerText = 'แตะตำแหน่งที่ ' + step + ' บนหน้าจอ';
+      instructionSub.innerText = 'แตะได้ทุกจุดบนหน้าจอ ระบบกำลังดักจับพิกเซลจริง...';
+    }
+
+    captureLayer.addEventListener('pointerdown', function(e) {
       if (!isRecording) return;
 
-      const screenRawX = e.screenX;
-      const screenRawY = e.screenY;
+      const screenRawX = (e.screenX !== undefined && e.screenX !== 0) ? e.screenX : e.clientX;
+      const screenRawY = (e.screenY !== undefined && e.screenY !== 0) ? e.screenY : e.clientY;
 
       const realX = Math.round(screenRawX * dpr);
       const realY = Math.round(screenRawY * dpr);
@@ -41,6 +183,67 @@
         finishRecording();
       }
     });
+
+    function createMarker(x, y, number) {
+      const marker = document.createElement('div');
+      marker.className = "absolute w-7 h-7 -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-500 border-2 border-white text-slate-950 font-bold text-xs flex items-center justify-center shadow-lg";
+      marker.style.left = x + 'px';
+      marker.style.top = y + 'px';
+      marker.innerText = number;
+      markerContainer.appendChild(marker);
+    }
+
+    function finishRecording() {
+      captureLayer.classList.add('hidden');
+      fabBtn.classList.remove('pulsing');
+      
+      let html = '';
+      for (let i = 0; i < recordedPoints.length; i++) {
+        const p = recordedPoints[i];
+        html += '<div class="bg-slate-800/70 p-2.5 rounded-xl border border-slate-700/50 flex justify-between items-center">' +
+                '<span class="text-emerald-400 font-bold">จุดที่ ' + p.point + '</span>' +
+                '<div class="text-right">' +
+                '<div class="text-slate-200">X: ' + p.realX + 'px , Y: ' + p.realY + 'px</div>' +
+                '<div class="text-[10px] text-slate-400">สัดส่วน: ' + p.pctX + '%, ' + p.pctY + '% (dp: ' + p.clientX + ', ' + p.clientY + ')</div>' +
+                '</div></div>';
+      }
+      resultList.innerHTML = html;
+
+      resultModal.classList.remove('hidden');
+      resultModal.classList.add('flex');
+    }
+
+    function closeModal() {
+      resultModal.classList.add('hidden');
+      resultModal.classList.remove('flex');
+      resetRecording();
+    }
+
+    function buildSummaryText() {
+      let text = '[รายงานพิกัดหน้าจอ 4 ตำแหน่ง]\n' +
+                 'อุปกรณ์: DPR=' + dpr.toFixed(3) + ' | หน้าจอจริง=' + realScreenWidth + 'x' + realScreenHeight + ' px\n' +
+                 '------------------------------------\n';
+      for (let i = 0; i < recordedPoints.length; i++) {
+        const p = recordedPoints[i];
+        text += 'จุดที่ ' + p.point + ':\n' +
+                '  - Physical Pixels : X=' + p.realX + ' px, Y=' + p.realY + ' px\n' +
+                '  - สัดส่วนหน้าจอ : ' + p.pctX + '%, ' + p.pctY + '%\n' +
+                '  - ค่าดิบ (dp)     : ' + p.clientX + ', ' + p.clientY + '\n\n';
+      }
+      return text;
+    }
+
+    function sendViaMailto() {
+      const subject = encodeURIComponent('พิกัด 4 จุดหน้าจอ (DPR: ' + dpr.toFixed(2) + ')');
+      const body = encodeURIComponent(buildSummaryText());
+      window.location.href = 'mailto:' + targetEmail + '?subject=' + subject + '&body=' + body;
+    }
+
+    function copyToClipboard() {
+      navigator.clipboard.writeText(buildSummaryText()).then(function() {
+        alert("คัดลอกข้อมูลพิกัดทั้ง 4 จุดเรียบร้อยแล้ว!");
+      });
+    }
   </script>
 </body>
 </html>
